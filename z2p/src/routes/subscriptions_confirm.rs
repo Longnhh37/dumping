@@ -15,7 +15,7 @@ pub async fn confirm(parameters: web::Query<Parameters>, pool: web::Data<PgPool>
     };
 
     match id {
-        None => HttpResponse::Unauthorized().finish(),
+        None => HttpResponse::NotFound().finish(),
         Some(subscriber_id) => {
             if confirm_subscriber(&pool, subscriber_id).await.is_err() {
                 HttpResponse::InternalServerError().finish()

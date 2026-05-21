@@ -36,11 +36,22 @@ impl EmailClientSettings {
 
 #[derive(Clone, Deserialize)]
 pub struct ApplicationSettings {
+    pub hmac_secret: Secret<String>,
+
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
     pub host: String,
     pub base_url: String,
+
+    #[serde(default = "default_log_level")]
+    pub log_level: String,
+
+    #[serde(default = "default_log_format")]
+    pub log_format: String,
 }
+
+fn default_log_level()  -> String { "info".to_owned() }
+fn default_log_format() -> String { "pretty".to_owned() }
 
 #[derive(Clone, Deserialize)]
 pub struct DatabaseSettings {
@@ -84,7 +95,7 @@ pub enum Environment {
 impl Environment {
     pub fn as_str(&self) -> &'static str {
         match self {
-            Environment::Local => "local",
+            Environment::Local      => "local",
             Environment::Production => "production",
         }
     }
@@ -95,9 +106,9 @@ impl TryFrom<String> for Environment {
 
     fn try_from(s: String) -> Result<Self, Self::Error> {
         match s.to_lowercase().as_str() {
-            "local" => Ok(Self::Local),
+            "local"      => Ok(Self::Local),
             "production" => Ok(Self::Production),
-            other => Err(format!(
+            other        => Err(format!(
                 "{other} is not a supported environment. Use either 'local' or 'production'"
             )),
         }
