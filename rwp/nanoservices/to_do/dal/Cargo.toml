@@ -1,0 +1,12 @@
+[package]
+name = "to-do-dal"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+json-file = ["serde_json", "serde"]
+
+[dependencies]
+glue = { path = "../../../glue" }
+serde_json = { version = "1", optional = true }
+serde = { version = "1", optional = true }

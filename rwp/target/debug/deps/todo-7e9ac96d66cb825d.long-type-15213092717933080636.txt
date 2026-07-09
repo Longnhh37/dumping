@@ -1,0 +1,1 @@
+impl std::future::Future<Output = std::result::Result<to_do_core::structs::TodoItem, glue::errors::NanoServiceError>>

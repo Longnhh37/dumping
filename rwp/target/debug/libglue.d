@@ -1,0 +1,1 @@
+/Users/long/code/all_rust/rust_web_programming/target/debug/libglue.rlib: /Users/long/code/all_rust/rust_web_programming/glue/src/errors.rs /Users/long/code/all_rust/rust_web_programming/glue/src/lib.rs

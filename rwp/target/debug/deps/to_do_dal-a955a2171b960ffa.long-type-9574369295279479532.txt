@@ -1,0 +1,1 @@
+std::result::Result<std::collections::HashMap<std::string::String, T>, glue::errors::NanoServiceError>
