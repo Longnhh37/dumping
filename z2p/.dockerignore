@@ -1,0 +1,12 @@
+target/
+scripts/
+migrations/
+tests/
+
+bacon.toml
+.bacon-locations
+
+.git
+.git_ignore
+.env
+.DS_Store

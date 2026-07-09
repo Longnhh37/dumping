@@ -11,4 +11,3 @@ pub const EMAIL: &str = "bobcooler@gmail.com";
 
 pub const STATUS_PENDING: &str = "pending_confirmation";
 pub const STATUS_CONFIRM: &str = "confirmed";
-
