@@ -15,7 +15,7 @@ use crate::{
 const ALPHABET: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 const CACHE_TTL_SECS: u64 = 3600;
 
-fn to_base62(mut n: i64) -> String {
+fn to_base62(mut n: i32) -> String {
     if n == 0 {
         return "0".to_string();
     }
@@ -28,14 +28,14 @@ fn to_base62(mut n: i64) -> String {
     String::from_utf8(res).unwrap()
 }
 
-fn from_base62(s: &str) -> Result<i64, AppError> {
-    let mut n = 0i64;
+fn from_base62(s: &str) -> Result<i32, AppError> {
+    let mut n: i32 = 0;
     for c in s.chars() {
         let digit = ALPHABET
             .iter()
             .position(|&x| x == c as u8)
             .ok_or(AppError::NotFound)?;
-        n = n * 62 + digit as i64;
+        n = n * 62 + digit as i32;
     }
 
     Ok(n)
@@ -49,7 +49,7 @@ pub async fn shorten(
         return Err(AppError::InvalidUrl(payload.url));
     }
 
-    let id: i64 = sqlx::query_scalar("INSERT INTO urls (long_url) VALUES ($1) RETURNING id")
+    let id: i32 = sqlx::query_scalar("INSERT INTO urls (long_url) VALUES ($1) RETURNING id")
         .bind(&payload.url)
         .fetch_one(&state.db)
         .await?;
