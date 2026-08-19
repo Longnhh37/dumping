@@ -49,7 +49,7 @@ pub async fn shorten(
         return Err(AppError::InvalidUrl(payload.url));
     }
 
-    let id: i64 = sqlx::query_scalar("INSERT INTO urls (long_url) VALUES ($1) RETURNIN id")
+    let id: i64 = sqlx::query_scalar("INSERT INTO urls (long_url) VALUES ($1) RETURNING id")
         .bind(&payload.url)
         .fetch_one(&state.db)
         .await?;
