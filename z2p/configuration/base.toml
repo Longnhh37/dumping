@@ -1,0 +1,16 @@
+[app]
+port = 8000
+hmac_secret = "super-long-and-secret-random-key-needed-to-verify-message-integrity"
+
+[database]
+username = "postgres"
+password = "password"
+host = "localhost"
+port = 5432
+db_name = "newsletter"
+
+[email_client]
+base_url = "localhost"
+sender_email = "test@gmail.com"
+authorization_token = "my-secret-token"
+timeout_milliseconds = 10000

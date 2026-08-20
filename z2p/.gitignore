@@ -1,0 +1,5 @@
+/target
+bacon.toml
+.bacon-locations
+.env
+.aider*
