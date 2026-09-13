@@ -1,0 +1,6 @@
+[package]
+name = "graph_algo_the_fun_way"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
