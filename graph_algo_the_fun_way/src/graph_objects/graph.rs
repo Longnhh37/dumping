@@ -1,12 +1,12 @@
 use super::{edge::Edge, node::Node};
 
-pub struct Graph {
-    nodes: Vec<Node>,
+pub struct Graph<W> {
+    nodes: Vec<Node<W>>,
     num_nodes: u32,
     undirected: bool,
 }
 
-impl Graph {
+impl<W: Copy + PartialOrd> Graph<W> {
     pub fn new(num_nodes: u32, undirected: bool) -> Self {
         let nodes = (0..num_nodes).map(|idx| Node::new(idx, None)).collect();
 
@@ -17,7 +17,7 @@ impl Graph {
         }
     }
 
-    pub fn get_edge(&self, from: i32, to: i32) -> Option<&Edge> {
+    pub fn get_edge(&self, from: i32, to: i32) -> Option<&Edge<W>> {
         if !self.valid_input(from, to) {
             return None;
         }
@@ -28,11 +28,11 @@ impl Graph {
         self.get_edge(from, to).is_some()
     }
 
-    pub fn make_edge_list(&self) -> Vec<&Edge> {
+    pub fn make_edge_list(&self) -> Vec<&Edge<W>> {
         self.nodes.iter().flat_map(|n| n.get_edge_list()).collect()
     }
 
-    pub fn insert_edge(&mut self, from: i32, to: i32, weight: f64) {
+    pub fn insert_edge(&mut self, from: i32, to: i32, weight: W) {
         if !self.valid_input(from, to) {
             return;
         }
@@ -50,6 +50,16 @@ impl Graph {
         self.nodes[from as usize].remove_edge(to as u32);
         if self.undirected {
             self.nodes[to as usize].remove_edge(from as u32);
+        }
+    }
+
+    pub fn copy_graph(&self) -> Self {
+        let nodes = self.nodes.iter().map(Node::deep_copy).collect();
+
+        Self {
+            nodes,
+            num_nodes: self.num_nodes,
+            undirected: self.undirected,
         }
     }
 
