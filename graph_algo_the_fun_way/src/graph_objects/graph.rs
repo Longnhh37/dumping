@@ -1,5 +1,6 @@
 use super::{edge::Edge, node::Node};
 
+#[derive(Debug)]
 pub struct Graph<W> {
     nodes: Vec<Node<W>>,
     num_nodes: u32,

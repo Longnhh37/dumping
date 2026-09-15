@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use super::edge::Edge;
 
+#[derive(Debug)]
 pub struct Node<W> {
     idx: u32,
     edges: HashMap<u32, Edge<W>>, // destination index -> Edge
