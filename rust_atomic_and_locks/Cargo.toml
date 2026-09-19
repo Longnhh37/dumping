@@ -7,3 +7,6 @@ edition = "2024"
 
 [lints.rust]
 unused = "allow"
+
+[lints.clippy]
+new_without_default = "allow"

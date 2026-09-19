@@ -27,7 +27,7 @@ impl<T> SpinLock<T> {
         Guard { lock: self }
     }
 
-    pub unsafe fn unlock(&self) {
+    pub fn unlock(&self) {
         self.locked.store(false, Ordering::Release);
     }
 }
