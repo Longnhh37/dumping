@@ -1,7 +1,7 @@
 use std::thread;
 
 use rust_atomic_and_locks::{
-    channels::{Channel2, Receiver, Sender},
+    channel::{Channel2, Receiver, Sender},
     spinlock::SpinLock,
 };
 
