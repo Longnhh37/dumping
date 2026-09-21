@@ -1,15 +1,16 @@
-use std::sync::atomic::AtomicU64;
+use std::{sync::atomic::AtomicU64, time::Instant};
 use std::thread;
 
 use rust_atomic_and_locks::{
     cache::{Padded, run},
     channel::{Channel2, Receiver, Sender},
+    locks::{Mutex, MutextGuard},
     spinlock::SpinLock,
 };
 
 fn main() {
     // ================================================================
-    // Spin lock
+    // Spinlock
     // ================================================================
     let x = SpinLock::new(Vec::new());
     thread::scope(|s| {
@@ -45,5 +46,18 @@ fn main() {
 
     println!("same cache line:  {:?}", run(&same_line, |c| c));
     println!("different cache line:  {:?}", run(&separate, |p| &p.0));
+
+    // ================================================================
+    // Locks
+    // ================================================================
+    let m = Mutex::new(0);
+    std::hint::black_box(&m);
+    let start = Instant::now();
+    for _ in 0..5_000_000 {
+        *m.lock() += 1;
+    }
+    let duration = start.elapsed();
+    println!("locked {} times in {:?}", *m.lock(), duration);
+
     println!("exit 0");
 }
