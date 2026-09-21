@@ -3,10 +3,11 @@ name = "rust_atomic_and_locks"
 version = "0.1.0"
 edition = "2024"
 
-[dependencies]
-
 [lints.rust]
 unused = "allow"
 
 [lints.clippy]
 new_without_default = "allow"
+
+[dependencies]
+atomic-wait = "1.1.0"

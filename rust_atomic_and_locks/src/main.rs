@@ -1,6 +1,8 @@
+use std::sync::atomic::AtomicU64;
 use std::thread;
 
 use rust_atomic_and_locks::{
+    cache::{Padded, run},
     channel::{Channel2, Receiver, Sender},
     spinlock::SpinLock,
 };
@@ -35,5 +37,13 @@ fn main() {
         assert_eq!(receiver.receive(), "Hello world");
     });
 
+    // ================================================================
+    // Cache coherence and False sharing
+    // ================================================================
+    let same_line = [AtomicU64::new(0), AtomicU64::new(0)];
+    let separate = [Padded(AtomicU64::new(0)), Padded(AtomicU64::new(0))];
+
+    println!("same cache line:  {:?}", run(&same_line, |c| c));
+    println!("different cache line:  {:?}", run(&separate, |p| &p.0));
     println!("exit 0");
 }
