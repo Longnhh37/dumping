@@ -1,5 +1,5 @@
 use std::{sync::atomic::AtomicU64, time::Instant};
-use std::thread;
+use std::thread::{self, scope};
 
 use rust_atomic_and_locks::{
     cache::{Padded, run},
@@ -46,10 +46,13 @@ fn main() {
 
     println!("same cache line:  {:?}", run(&same_line, |c| c));
     println!("different cache line:  {:?}", run(&separate, |p| &p.0));
+    println!();
 
     // ================================================================
-    // Locks
+    // Locks - Mutex
     // ================================================================
+
+    // Scenario 1: No contention
     let m = Mutex::new(0);
     std::hint::black_box(&m);
     let start = Instant::now();
@@ -59,5 +62,19 @@ fn main() {
     let duration = start.elapsed();
     println!("locked {} times in {:?}", *m.lock(), duration);
 
-    println!("exit 0");
+    // Scenario 2: With contention
+    let m2 = Mutex::new(0);
+    std::hint::black_box(&m2);
+    let start = Instant::now();
+    thread::scope(|s| {
+        for _ in 0..4 {
+            s.spawn(|| {
+                for _ in 0..5_000_000 {
+                    *m2.lock() += 1;
+                }
+            });
+        }
+    });
+    let duration = start.elapsed();
+    println!("locked {} times in {:?}", *m2.lock(), duration);
 }
