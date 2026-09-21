@@ -125,7 +125,7 @@ impl CondVar {
 pub struct RwLock<T> {
     /// num of read locks times two, plus one if there's a writer waiting
     /// u32::MAX if write locked
-    /// readers can acquire the lock then state is even, but need to block when odd
+    /// readers can acquire the lock when state is even, but need to block when odd
     state: AtomicU32,
     writer_wake_counter: AtomicU32,
     value: UnsafeCell<T>,
@@ -144,7 +144,7 @@ impl<T> RwLock<T> {
         let mut s = self.state.load(Relaxed);
         loop {
             if s & 1 == 0 {
-                assert!(s != u32::MAX - 2, "too many readers");
+                assert!(s != u32::MAX - 3, "too many readers");
                 match self.state.compare_exchange_weak(s, s + 2, Acquire, Relaxed) {
                     Ok(_) => return ReadGuard { rwlock: self },
                     Err(e) => s = e,
@@ -162,11 +162,29 @@ impl<T> RwLock<T> {
         loop {
             if s <= 1 {
                 match self.state.compare_exchange(s, u32::MAX, Acquire, Relaxed) {
-                    Ok(_) => return WriteGuard { rwlock: self }<
+                    Ok(_) => return WriteGuard { rwlock: self },
+                    Err(e) => {
+                        s = e;
+                        continue;
+                    }
                 }
             }
+            if s & 1 == 0 {
+                match self.state.compare_exchange(s, s + 1, Relaxed, Relaxed) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        s = e;
+                        continue;
+                    }
+                }
+            }
+            let w = self.writer_wake_counter.load(Acquire);
+            s = self.state.load(Relaxed);
+            if s >= 2 {
+                wait(&self.writer_wake_counter, w);
+                s = self.state.load(Relaxed);
+            }
         }
-        WriteGuard { rwlock: self }
     }
 }
 
@@ -177,9 +195,16 @@ pub struct ReadGuard<'a, T> {
     rwlock: &'a RwLock<T>,
 }
 
+impl<T> Deref for ReadGuard<'_, T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*self.rwlock.value.get() }
+    }
+}
+
 impl<T> Drop for ReadGuard<'_, T> {
     fn drop(&mut self) {
-        if self.rwlock.state.fetch_sub(1, Release) == 1 {
+        if self.rwlock.state.fetch_sub(2, Release) == 3 {
             self.rwlock.writer_wake_counter.fetch_add(1, Release);
             wake_one(&self.rwlock.writer_wake_counter);
         }
