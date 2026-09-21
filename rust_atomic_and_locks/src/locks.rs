@@ -1,8 +1,8 @@
 use std::{
     cell::UnsafeCell,
     ops::{Deref, DerefMut},
-    sync::atomic::AtomicU32,
     sync::atomic::Ordering::*,
+    sync::atomic::{AtomicU32, AtomicUsize},
 };
 
 use atomic_wait::{wait, wake_all, wake_one};
@@ -76,5 +76,79 @@ impl<T> Drop for MutextGuard<'_, T> {
         if self.mutex.state.swap(0, Release) == 2 {
             wake_one(&self.mutex.state);
         };
+    }
+}
+
+// ===========================================================
+// Condvar
+// ===========================================================
+pub struct CondVar {
+    counter: AtomicU32,
+    num_waiters: AtomicUsize,
+}
+
+impl CondVar {
+    pub const fn new() -> Self {
+        Self {
+            counter: AtomicU32::new(0),
+            num_waiters: AtomicUsize::new(0),
+        }
+    }
+
+    pub fn notify_one(&self) {
+        if self.num_waiters.load(Relaxed) > 0 {
+            self.counter.fetch_add(1, Relaxed);
+            wake_one(&self.counter);
+        }
+    }
+
+    pub fn notify_all(&self) {
+        if self.num_waiters.load(Relaxed) > 0 {
+            self.counter.fetch_add(1, Relaxed);
+            wake_all(&self.counter);
+        }
+    }
+
+    pub fn wait<'a, T>(&self, guard: MutextGuard<'a, T>) -> MutextGuard<'a, T> {
+        self.num_waiters.fetch_add(1, Relaxed);
+        let counter_value = self.counter.load(Relaxed);
+        let mutex = guard.mutex;
+        drop(guard);
+        wait(&self.counter, counter_value);
+        self.num_waiters.fetch_sub(1, Relaxed);
+        mutex.lock()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{thread, time::Duration};
+
+    use super::*;
+
+    #[test]
+    fn main_thread_wait_while_still_allow_spurious_wake_ups() {
+        let mutex = Mutex::new(0);
+        let condvar = CondVar::new();
+
+        let mut wakeups = 0;
+
+        thread::scope(|s| {
+            s.spawn(|| {
+                thread::sleep(Duration::from_secs(1));
+                *mutex.lock() = 123;
+                condvar.notify_one();
+            });
+
+            let mut m = mutex.lock();
+            while *m < 100 {
+                m = condvar.wait(m);
+                wakeups += 1;
+            }
+
+            assert_eq!(*m, 123);
+        });
+
+        assert!(wakeups < 10);
     }
 }
