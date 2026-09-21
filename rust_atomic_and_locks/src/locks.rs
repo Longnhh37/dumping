@@ -1,8 +1,7 @@
 use std::{
     cell::UnsafeCell,
     ops::{Deref, DerefMut},
-    sync::atomic::Ordering::*,
-    sync::atomic::{AtomicU32, AtomicUsize},
+    sync::atomic::{AtomicU32, AtomicUsize, Ordering::*},
 };
 
 use atomic_wait::{wait, wake_all, wake_one};
@@ -117,6 +116,100 @@ impl CondVar {
         wait(&self.counter, counter_value);
         self.num_waiters.fetch_sub(1, Relaxed);
         mutex.lock()
+    }
+}
+
+// ===========================================================
+// Reader-Writer lock
+// ===========================================================
+pub struct RwLock<T> {
+    /// num of read locks times two, plus one if there's a writer waiting
+    /// u32::MAX if write locked
+    /// readers can acquire the lock then state is even, but need to block when odd
+    state: AtomicU32,
+    writer_wake_counter: AtomicU32,
+    value: UnsafeCell<T>,
+}
+
+impl<T> RwLock<T> {
+    pub const fn new(value: T) -> Self {
+        Self {
+            state: AtomicU32::new(0),
+            writer_wake_counter: AtomicU32::new(0),
+            value: UnsafeCell::new(value),
+        }
+    }
+
+    pub fn read(&self) -> ReadGuard<'_, T> {
+        let mut s = self.state.load(Relaxed);
+        loop {
+            if s & 1 == 0 {
+                assert!(s != u32::MAX - 2, "too many readers");
+                match self.state.compare_exchange_weak(s, s + 2, Acquire, Relaxed) {
+                    Ok(_) => return ReadGuard { rwlock: self },
+                    Err(e) => s = e,
+                }
+            }
+            if s & 1 == 1 {
+                wait(&self.state, s);
+                s = self.state.load(Relaxed);
+            }
+        }
+    }
+
+    pub fn write(&self) -> WriteGuard<'_, T> {
+        let mut s = self.state.load(Relaxed);
+        loop {
+            if s <= 1 {
+                match self.state.compare_exchange(s, u32::MAX, Acquire, Relaxed) {
+                    Ok(_) => return WriteGuard { rwlock: self }<
+                }
+            }
+        }
+        WriteGuard { rwlock: self }
+    }
+}
+
+unsafe impl<T> Sync for RwLock<T> where T: Send + Sync {}
+
+// ========== ReadGuard ==========
+pub struct ReadGuard<'a, T> {
+    rwlock: &'a RwLock<T>,
+}
+
+impl<T> Drop for ReadGuard<'_, T> {
+    fn drop(&mut self) {
+        if self.rwlock.state.fetch_sub(1, Release) == 1 {
+            self.rwlock.writer_wake_counter.fetch_add(1, Release);
+            wake_one(&self.rwlock.writer_wake_counter);
+        }
+    }
+}
+
+// ========== WriteGuard ==========
+pub struct WriteGuard<'a, T> {
+    rwlock: &'a RwLock<T>,
+}
+
+impl<T> Deref for WriteGuard<'_, T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*self.rwlock.value.get() }
+    }
+}
+
+impl<T> DerefMut for WriteGuard<'_, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { &mut *self.rwlock.value.get() }
+    }
+}
+
+impl<T> Drop for WriteGuard<'_, T> {
+    fn drop(&mut self) {
+        self.rwlock.state.store(0, Release);
+        self.rwlock.writer_wake_counter.fetch_add(1, Release);
+        wake_one(&self.rwlock.writer_wake_counter);
+        wake_all(&self.rwlock.state);
     }
 }
 
