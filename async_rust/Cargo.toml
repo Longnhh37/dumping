@@ -1,6 +1,5 @@
-[package]
-name = "async_programming_in_rust"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
+[workspace]
+resolver = "3"
+members = [
+    "event_queue"
+]
