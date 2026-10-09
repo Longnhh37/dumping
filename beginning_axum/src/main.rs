@@ -1,7 +1,15 @@
 use axum::{
     Router,
+    extract::Query,
     routing::{delete, get, post, put},
 };
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct User {
+    id: i32,
+    name: String,
+}
 
 #[tokio::main]
 async fn main() {
