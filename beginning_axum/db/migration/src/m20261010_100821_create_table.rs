@@ -9,16 +9,16 @@ enum Users {
 }
 
 #[derive(DeriveIden)]
-enum Product {
+enum Products {
     Table,
     Id,
     Title,
     Price,
-    Category,
+    CategoryName,
 }
 
 #[derive(DeriveIden)]
-enum Category {
+enum Categories {
     Table,
     Name,
 }
@@ -54,38 +54,32 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(Category::Table)
+                    .table(Categories::Table)
                     .if_not_exists()
-                    .col(
-                        ColumnDef::new(Category::Name)
-                            .string()
-                            .unique_key()
-                            .not_null()
-                            .primary_key(),
-                    )
+                    .col(string(Categories::Name).primary_key())
                     .to_owned(),
             )
             .await?;
         manager
             .create_table(
                 Table::create()
-                    .table(Product::Table)
+                    .table(Products::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(Product::Id)
+                        ColumnDef::new(Products::Id)
                             .integer()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(Product::Title).string().not_null())
-                    .col(ColumnDef::new(Product::Price).integer().not_null())
-                    .col(ColumnDef::new(Product::Category).string().not_null())
+                    .col(ColumnDef::new(Products::Title).string().not_null())
+                    .col(ColumnDef::new(Products::Price).integer().not_null())
+                    .col(ColumnDef::new(Products::CategoryName).string().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk_product_category")
-                            .from(Product::Table, Product::Category)
-                            .to(Category::Table, Category::Name),
+                            .from(Products::Table, Products::CategoryName)
+                            .to(Categories::Table, Categories::Name),
                     )
                     .to_owned(),
             )
@@ -98,10 +92,15 @@ impl MigrationTrait for Migration {
             .drop_table(Table::drop().table(Users::Table).if_exists().to_owned())
             .await?;
         manager
-            .drop_table(Table::drop().table(Product::Table).if_exists().to_owned())
+            .drop_table(Table::drop().table(Products::Table).if_exists().to_owned())
             .await?;
         manager
-            .drop_table(Table::drop().table(Category::Table).if_exists().to_owned())
+            .drop_table(
+                Table::drop()
+                    .table(Categories::Table)
+                    .if_exists()
+                    .to_owned(),
+            )
             .await?;
         Ok(())
     }
