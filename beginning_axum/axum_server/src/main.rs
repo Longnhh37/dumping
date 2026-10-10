@@ -3,7 +3,6 @@ use axum::{
     extract::{FromRef, State},
     routing::get,
 };
-use std::sync::{Arc, Mutex};
 
 #[derive(FromRef, Clone)]
 struct AppState {
@@ -25,8 +24,8 @@ async fn main() {
         current_users: 3,
     };
     let app = Router::new()
-        .route("/token", get(token))
         .route("/users", get(users))
+        .route("/token", get(token))
         .with_state(state);
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8000")
         .await
