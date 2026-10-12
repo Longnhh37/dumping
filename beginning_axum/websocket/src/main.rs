@@ -1,36 +1,27 @@
-use std::sync::Arc;
-
 use axum::{
     Router,
-    extract::State,
-    extract::ws::{Message, WebSocket, WebSocketUpgrade},
+    extract::{
+        State,
+        ws::{Message, WebSocket, WebSocketUpgrade},
+    },
     response::Response,
     routing::get,
 };
-use futures_util::{
-    SinkExt,
-    stream::{SplitSink, SplitStream, StreamExt},
-};
-use tokio::sync::{
-    Mutex,
-    broadcast::{self, Receiver, Sender},
-};
+use futures_util::{SinkExt, StreamExt};
+use tokio::sync::broadcast::{self, Sender, error::RecvError};
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 struct AppState {
-    broadcast_tx: Arc<Mutex<Sender<Message>>>,
+    tx: Sender<Message>,
 }
 
 #[tokio::main]
 async fn main() {
     let (tx, _) = broadcast::channel(32);
-    let app_state = AppState {
-        broadcast_tx: Arc::new(Mutex::new(tx)),
-    };
 
     let app = Router::new()
         .route("/ws", get(ws_handler))
-        .with_state(app_state);
+        .with_state(AppState { tx });
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
@@ -40,41 +31,41 @@ async fn ws_handler(ws: WebSocketUpgrade, State(app): State<AppState>) -> Respon
     ws.on_upgrade(|socket| handle_socket(socket, app))
 }
 
-async fn handle_socket(ws: WebSocket, app: AppState) {
-    let (ws_tx, ws_rx) = ws.split();
-    let ws_tx = Arc::new(Mutex::new(ws_tx));
+async fn handle_socket(socket: WebSocket, app: AppState) {
+    let (mut ws_tx, mut ws_rx) = socket.split();
+    let mut rx = app.tx.subscribe();
+    let tx = app.tx;
 
-    {
-        let broadcast_rx = app.broadcast_tx.lock().await.subscribe();
-        tokio::spawn(async move {
-            recv_broadcast(ws_tx, broadcast_rx).await;
-        });
-    }
-
-    recv_from_client(ws_rx, app.broadcast_tx).await;
-}
-
-async fn recv_broadcast(
-    client_tx: Arc<Mutex<SplitSink<WebSocket, Message>>>,
-    mut broadcast_rx: Receiver<Message>,
-) {
-    while let Ok(msg) = broadcast_rx.recv().await {
-        if client_tx.lock().await.send(msg).await.is_err() {
-            return;
+    // broadcast channe -> client
+    let mut send_task = tokio::spawn(async move {
+        loop {
+            match rx.recv().await {
+                Ok(msg) => {
+                    if ws_tx.send(msg).await.is_err() {
+                        break;
+                    }
+                }
+                Err(RecvError::Lagged(n)) => eprintln!("client missed {n} message"),
+                Err(RecvError::Closed) => break,
+            }
         }
-    }
-}
+    });
 
-async fn recv_from_client(
-    mut client_rx: SplitStream<WebSocket>,
-    broadcast_tx: Arc<Mutex<Sender<Message>>>,
-) {
-    while let Some(Ok(msg)) = client_rx.next().await {
-        if matches!(msg, Message::Close(_)) {
-            return;
+    // client -> broadcast channel
+    let mut recv_task = tokio::spawn(async move {
+        while let Some(Ok(msg)) = ws_rx.next().await {
+            match msg {
+                Message::Close(_) => break,
+                Message::Text(_) => {
+                    let _ = tx.send(msg);
+                }
+                _ => {}
+            }
         }
-        if broadcast_tx.lock().await.send(msg).is_err() {
-            println!("failed to broadcast a message");
-        }
+    });
+
+    tokio::select! {
+        _ = &mut send_task => recv_task.abort(),
+        _ = &mut recv_task => send_task.abort(),
     }
 }
