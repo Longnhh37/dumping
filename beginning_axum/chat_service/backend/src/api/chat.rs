@@ -10,7 +10,9 @@ use serde_json::json;
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
 
-pub async fn subscribe(State(queue): State<broadcast::Sender<String>>) -> impl IntoResponse {
+use crate::entities::chat::{self, Entity as ChatEntity, Model as Chat};
+
+pub async fn subscribe(State(queue): State<broadcast::Sender<Chat>>) -> impl IntoResponse {
     let stream = BroadcastStream::new(queue.subscribe()).map(|msg| match msg {
         Ok(msg) => Ok(Event::default()
             .event("message")
@@ -21,7 +23,9 @@ pub async fn subscribe(State(queue): State<broadcast::Sender<String>>) -> impl I
     Sse::new(stream).keep_alive(KeepAlive::default())
 }
 
-pub async fn send(State(queue): State<broadcast::Sender<String>>, new_msg: String) -> &'static str {
-    queue.send(new_msg).expect("Error sending message");
+pub async fn send(State(queue): State<broadcast::Sender<Chat>>, new_msg: String) -> &'static str {
+    let _ = queue
+        .send(serde_json::from_str(&new_msg))
+        .expect("Invalid chat JSON");
     "Message sent"
 }
