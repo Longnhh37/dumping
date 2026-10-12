@@ -1,9 +1,12 @@
 use axum::{
     Router,
+    body::Body,
     extract::{
         State,
         ws::{Message, WebSocket, WebSocketUpgrade},
     },
+    http::{HeaderMap, Request, StatusCode},
+    middleware::{self, Next},
     response::Response,
     routing::get,
 };
@@ -21,10 +24,27 @@ async fn main() {
 
     let app = Router::new()
         .route("/ws", get(ws_handler))
+        .route_layer(middleware::from_fn(authenticate))
         .with_state(AppState { tx });
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
+}
+
+async fn authenticate(
+    headers: HeaderMap,
+    request: Request<Body>,
+    next: Next,
+) -> Result<Response, StatusCode> {
+    if headers
+        .get("Authorization")
+        .map(|v| v == "Bearer token")
+        .unwrap_or(false)
+    {
+        Ok(next.run(request).await)
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
 }
 
 async fn ws_handler(ws: WebSocketUpgrade, State(app): State<AppState>) -> Response {
