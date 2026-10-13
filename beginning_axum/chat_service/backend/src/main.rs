@@ -1,11 +1,12 @@
 mod api;
 mod config;
+mod entities;
 
 use axum::{
     Router,
     routing::{get, post},
 };
-use sea_orm::Database;
+use sea_orm::{Database, prelude};
 use tokio::sync::broadcast;
 use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
@@ -14,6 +15,7 @@ use crate::api::{
     state::AppState,
 };
 use crate::config::Config;
+use migration::{Migrator, MigratorTrait};
 
 #[tokio::main]
 async fn main() {
@@ -27,6 +29,8 @@ async fn main() {
     let conn = Database::connect(&config.database_url)
         .await
         .expect("Failed to connect to database");
+
+    Migrator::up(&conn, None).await.unwrap();
 
     let state = AppState {
         conn,
@@ -44,7 +48,8 @@ async fn main() {
         )
         .with_state(state);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    println!("Server is running on port 3000");
+    let addr = format!("0.0.0.0:{}", config.server_port);
+    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+    println!("Server is running on port {}", config.server_port);
     axum::serve(listener, app).await.unwrap();
 }
