@@ -1,16 +1,20 @@
+use std::collections::HashMap;
+
 use axum::{
-    extract::State,
+    extract::{Query, State},
+    Json,
     response::{
         IntoResponse,
         sse::{Event, KeepAlive, Sse},
     },
 };
 use futures_util::stream::StreamExt;
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 use serde_json::json;
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
 
-use crate::entities::chat::{self, Entity as ChatEntity, Model as Chat};
+use crate::entities::chat::{Column, Entity as ChatEntity, Model as Chat};
 
 pub async fn subscribe(State(queue): State<broadcast::Sender<Chat>>) -> impl IntoResponse {
     let stream = BroadcastStream::new(queue.subscribe()).map(|msg| match msg {
@@ -25,7 +29,22 @@ pub async fn subscribe(State(queue): State<broadcast::Sender<Chat>>) -> impl Int
 
 pub async fn send(State(queue): State<broadcast::Sender<Chat>>, new_msg: String) -> &'static str {
     let _ = queue
-        .send(serde_json::from_str(&new_msg))
+        .send(serde_json::from_str(&new_msg).unwrap())
         .expect("Invalid chat JSON");
     "Message sent"
+}
+
+pub async fn get_chat(
+    State(conn): State<DatabaseConnection>,
+    Query(params): Query<HashMap<String, String>>,
+) -> Json<Vec<Chat>> {
+    let room_id = params.get("room_id").unwrap();
+
+    Json(
+        ChatEntity::find()
+            .filter(Column::RoomId.eq(room_id.parse::<i32>().unwrap()))
+            .all(&conn)
+            .await
+            .unwrap(),
+    )
 }
