@@ -1,7 +1,9 @@
 use tokio::sync::broadcast;
 use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
-use backend::{api::state::AppState, app::create_app, config::Config, db};
+use backend::{
+    api::state::AppState, app::create_app, config::Config, db, utils::signal::shutdown_signal,
+};
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
@@ -22,6 +24,13 @@ async fn main() -> std::io::Result<()> {
 
     let addr = format!("0.0.0.0:{}", config.server_port);
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+
     println!("Server is running on port {}", config.server_port);
-    axum::serve(listener, app).await
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await
+        .unwrap();
+
+    println!("Server has been fully shut down.");
+    Ok(())
 }
