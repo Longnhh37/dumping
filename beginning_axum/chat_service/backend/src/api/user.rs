@@ -75,8 +75,6 @@ pub async fn delete_user(
     State(conn): State<DatabaseConnection>,
     Query(params): Query<HashMap<String, String>>,
 ) -> Json<&'static str> {
-    tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
-
     let mut condition = Condition::any();
     if let Some(id) = params.get("id") {
         condition = condition.add(Column::Id.eq(id.parse::<i32>().unwrap()));
