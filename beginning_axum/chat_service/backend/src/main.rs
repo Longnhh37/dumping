@@ -1,16 +1,15 @@
 mod api;
 mod app;
 mod config;
+mod db;
 mod entities;
 
-use sea_orm::Database;
 use tokio::sync::broadcast;
 use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
 use crate::api::state::AppState;
 use crate::app::create_app;
 use crate::config::Config;
-use migration::{Migrator, MigratorTrait};
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
@@ -21,11 +20,7 @@ async fn main() -> std::io::Result<()> {
         .with(EnvFilter::from_default_env())
         .init();
 
-    let conn = Database::connect(&config.database_url)
-        .await
-        .expect("Failed to connect to database");
-
-    Migrator::up(&conn, None).await.unwrap();
+    let conn = db::init(&config.database_url).await;
 
     let state = AppState {
         conn,

@@ -12,8 +12,9 @@ use crate::api::{
 };
 
 pub fn create_app(state: AppState) -> Router {
-    let static_files =
-        ServeDir::new("static").not_found_service(ServeFile::new("static/index.html"));
+    let root = env!("CARGO_MANIFEST_DIR");
+    let static_files = ServeDir::new(format!("{root}/static"))
+        .not_found_service(ServeFile::new(format!("{root}/static/index.html")));
 
     Router::new()
         .nest(
@@ -53,7 +54,6 @@ mod tests {
     use sea_orm::Database;
     use tokio::sync::broadcast;
     use tower::ServiceExt;
-    use tower_http::set_header::request;
 
     #[tokio::test]
     async fn test_create_room_endpoint() {

@@ -8,6 +8,7 @@ use sea_orm::{
     ActiveModelTrait, ActiveValue, ColumnTrait, Condition, DatabaseConnection, EntityTrait,
     ModelTrait, QueryFilter,
 };
+use serde::Serialize;
 
 use crate::entities::users::{ActiveModel, Column, Entity as UserEntity, Model};
 
@@ -18,10 +19,16 @@ pub struct UpsertModel {
     password: Option<String>,
 }
 
+#[derive(Serialize)]
+pub struct UserSummary {
+    id: i32,
+    username: String,
+}
+
 pub async fn get_user(
     State(conn): State<DatabaseConnection>,
     Query(params): Query<HashMap<String, String>>,
-) -> Json<Vec<Model>> {
+) -> Json<Vec<UserSummary>> {
     let mut condition = Condition::all();
     if let Some(id) = params.get("id") {
         condition = condition.add(Column::Id.eq(id.parse::<i32>().unwrap()));
@@ -30,13 +37,19 @@ pub async fn get_user(
         condition = condition.add(Column::Username.contains(username));
     }
 
-    Json(
-        UserEntity::find()
-            .filter(condition)
-            .all(&conn)
-            .await
-            .unwrap(),
-    )
+    let users = UserEntity::find()
+        .filter(condition)
+        .all(&conn)
+        .await
+        .unwrap()
+        .into_iter()
+        .map(|user| UserSummary {
+            id: user.id,
+            username: user.username,
+        })
+        .collect();
+
+    Json(users)
 }
 
 pub async fn post_user(
