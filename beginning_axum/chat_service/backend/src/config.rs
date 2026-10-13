@@ -18,3 +18,13 @@ impl Config {
         envy::from_env::<Config>().expect("Required env vars are not set")
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::default_port;
+
+    #[test]
+    fn defaults_server_port_to_3000() {
+        assert_eq!(default_port(), 3000);
+    }
+}

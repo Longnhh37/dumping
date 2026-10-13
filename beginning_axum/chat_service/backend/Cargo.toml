@@ -13,7 +13,7 @@ chrono = "0.4.45"
 dotenvy = "0.15.7"
 envy = "0.4.2"
 futures-util = "0.3.34"
-sea-orm = { version = "2.0.4", features = ["sqlx-postgres", "runtime-tokio-native-tls", "macros"] }
+sea-orm = { version = "2.0.4", features = ["sqlx-postgres", "runtime-tokio-native-tls", "macros", "mock"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
 tokio = { version = "1.53.2", features = ["full"] }

@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
 use axum::{
-    extract::{Query, State},
     Json,
+    extract::{Query, State},
+    http::StatusCode,
     response::{
         IntoResponse,
         sse::{Event, KeepAlive, Sse},
@@ -27,11 +28,13 @@ pub async fn subscribe(State(queue): State<broadcast::Sender<Chat>>) -> impl Int
     Sse::new(stream).keep_alive(KeepAlive::default())
 }
 
-pub async fn send(State(queue): State<broadcast::Sender<Chat>>, new_msg: String) -> &'static str {
-    let _ = queue
-        .send(serde_json::from_str(&new_msg).unwrap())
-        .expect("Invalid chat JSON");
-    "Message sent"
+pub async fn send(
+    State(queue): State<broadcast::Sender<Chat>>,
+    new_msg: String,
+) -> Result<&'static str, StatusCode> {
+    let message = serde_json::from_str(&new_msg).map_err(|_| StatusCode::BAD_REQUEST)?;
+    let _ = queue.send(message);
+    Ok("Message sent")
 }
 
 pub async fn get_chat(

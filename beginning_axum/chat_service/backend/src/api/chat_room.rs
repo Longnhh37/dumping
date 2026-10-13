@@ -104,3 +104,18 @@ pub async fn delete_room(
 
     Json("Deleted")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::NewRoom;
+
+    #[test]
+    fn room_request_round_trips_participants() {
+        let room: NewRoom = serde_json::from_str(r#"{"participants":["alice","bob"]}"#).unwrap();
+        assert_eq!(room.participants, ["alice", "bob"]);
+        assert_eq!(
+            serde_json::to_value(room).unwrap()["participants"],
+            serde_json::json!(["alice", "bob"])
+        );
+    }
+}

@@ -1,15 +1,7 @@
-mod api;
-mod app;
-mod config;
-mod db;
-mod entities;
-
 use tokio::sync::broadcast;
 use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
-use crate::api::state::AppState;
-use crate::app::create_app;
-use crate::config::Config;
+use backend::{api::state::AppState, app::create_app, config::Config, db};
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {

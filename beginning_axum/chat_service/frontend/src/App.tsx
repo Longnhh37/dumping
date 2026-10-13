@@ -21,18 +21,14 @@ function App() {
     return () => window.removeEventListener('popstate', onPopState)
   }, [])
 
-  useEffect(() => {
-    if (!username && path !== '/') navigate('/')
-    else if (username && path === '/') navigate('/rooms')
-  }, [username, path, navigate])
-
   const setUser = (name: string) => {
     sessionStorage.setItem('username', name)
     setUsername(name)
     navigate('/rooms')
   }
 
-  const roomMatch = path.match(/^\/chat\/(\d+)/)
+  const viewPath = username && path === '/' ? '/rooms' : path
+  const roomMatch = viewPath.match(/^\/chat\/(\d+)/)
 
   return (
     <main className="app-shell">
@@ -58,7 +54,17 @@ function Rooms({ username, onJoin }: { username: string; onJoin: (id: number) =>
     try { const response = await fetch('/api/room'); if (!response.ok) throw new Error('Could not load rooms'); setRooms(await response.json() as Room[]); setError('') }
     catch { setError('Could not connect to chat service. Please try again.') }
   }, [])
-  useEffect(() => { void loadRooms() }, [loadRooms])
+  useEffect(() => {
+    let active = true
+    fetch('/api/room')
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Could not load rooms')
+        const data = await response.json() as Room[]
+        if (active) setRooms(data)
+      })
+      .catch(() => { if (active) setError('Could not connect to chat service. Please try again.') })
+    return () => { active = false }
+  }, [])
 
   const createRoom = async () => {
     try { const response = await fetch('/api/room', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ participants: [username] }) }); if (!response.ok) throw new Error(); const room = await response.json() as Room; await loadRooms(); if (room.id) onJoin(room.id) }
