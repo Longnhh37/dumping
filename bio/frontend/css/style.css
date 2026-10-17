@@ -1,0 +1,89 @@
+:root {
+  --bg: #f4f6fb;
+  --fg: #1c2230;
+  --card: #ffffff;
+  --accent: #4f46e5;
+  --radius: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12151c;
+    --fg: #e6e9f2;
+    --card: #1c2230;
+    --accent: #818cf8;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  font-family: system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.card {
+  width: min(100%, 28rem);
+  padding: 2rem;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 24px rgb(0 0 0 / 0.1);
+}
+
+form {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+}
+
+input,
+button {
+  padding: 0.7rem 0.9rem;
+  font: inherit;
+  border-radius: 8px;
+}
+
+input {
+  border: 1px solid color-mix(in srgb, var(--fg) 30%, transparent);
+  background: transparent;
+  color: inherit;
+}
+
+button {
+  border: 0;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(1.1);
+}
+
+a {
+  color: var(--accent);
+}
+
+.btn {
+  display: block;
+  margin: 1.5rem 0;
+  padding: 0.8rem 1rem;
+  text-align: center;
+  text-decoration: none;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border-radius: 8px;
+}
+
+.btn:hover {
+  filter: brightness(1.1);
+}

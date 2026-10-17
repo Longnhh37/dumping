@@ -1,0 +1,11 @@
+[package]
+name = "backend"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = "0.8.9"
+serde = { version = "1.0.229", features = ["derive"] }
+tokio = { version = "1.53.3", features = ["full"] }
+tower-http = { version = "0.7.1", features = ["fs"] }
+urlencoding = "2"

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Welcome, Visitor</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <main class="card">
+      <h1>Welcome, visitor!</h1>
+      <p>Before you look around, tell me a bit about yourself.</p>
+
+      <form method="post" action="/submit">
+        <label for="name">Who are you?</label>
+        <input
+          id="name"
+          name="name"
+          type="text"
+          maxlength="50"
+          placeholder="Enter your name"
+          autocomplete="name"
+        />
+        <button type="submit">Submit</button>
+      </form>
+    </main>
+  </body>
+</html>
