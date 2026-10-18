@@ -5,8 +5,10 @@ edition = "2024"
 
 [dependencies]
 actix-web = { version = "4.9", optional = true }
+axum = { version = "0.8.9", optional = true }
 serde = { version = "1.0.197", features = ["derive"]}
 thiserror = "2"
 
 [features]
 actix = ["actix-web"]
+axum = ["dep:axum"]

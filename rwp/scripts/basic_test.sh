@@ -5,7 +5,7 @@
 SCRIPTPATH="${0:A:h}"
 cd "$SCRIPTPATH/.."
 
-framework=${1:-actix}
+framework=${1:-axum}
 
 case $framework in
   actix)

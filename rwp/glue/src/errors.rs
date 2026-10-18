@@ -4,6 +4,24 @@ use thiserror::Error;
 #[cfg(feature = "actix")]
 use actix_web::{HttpResponse, error::ResponseError, http::StatusCode};
 
+#[cfg(feature = "axum")]
+impl axum::response::IntoResponse for NanoServiceError {
+    fn into_response(self) -> axum::response::Response {
+        use axum::{Json, http::StatusCode};
+
+        let status = match &self.status {
+            NanoServiceErrorStatus::NotFound => StatusCode::NOT_FOUND,
+            NanoServiceErrorStatus::Forbidden => StatusCode::FORBIDDEN,
+            NanoServiceErrorStatus::Unknown => StatusCode::INTERNAL_SERVER_ERROR,
+            NanoServiceErrorStatus::BadRequest => StatusCode::BAD_REQUEST,
+            NanoServiceErrorStatus::Conflict => StatusCode::CONFLICT,
+            NanoServiceErrorStatus::Unauthorized => StatusCode::UNAUTHORIZED,
+        };
+
+        (status, Json(self.to_string())).into_response()
+    }
+}
+
 #[macro_export]
 macro_rules! safe_eject {
     ($e:expr, $err_status:expr) => {
