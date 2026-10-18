@@ -5,7 +5,7 @@ pub mod update;
 
 use axum::{
     Router,
-    routing::{delete, get, post},
+    routing::{delete, get, patch, post},
 };
 
 pub fn router() -> Router {
@@ -16,7 +16,9 @@ pub fn router() -> Router {
     let api_v1 = Router::new()
         .nest("/get", get_routes)
         .route("/delete/{name}", delete(delete::delete_by_name))
-        .route("/create", post(create::create));
+        .route("/create", post(create::create))
+        .route("update", patch(update::update));
+
 
     Router::new().nest("/api/v1", api_v1)
 }
