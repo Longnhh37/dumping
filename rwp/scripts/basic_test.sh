@@ -37,8 +37,10 @@ sleep 1
 echo '{}' > tasks.json
 rm -f output.txt
 
-xh POST :8080/api/v1/create title=writing status=Pending >> output.txt
-xh POST :8080/api/v1/create title=coding status=Pending >> output.txt
-xh DELETE :8080/api/v1/delete/coding >> output.txt
+xh POST :8080/api/v1/create title=writing status=PENDING | jq . >> basic_test_output.txt
+xh POST :8080/api/v1/create title=coding status=PENDING | jq . >> basic_test_output.txt
+xh --check-status DELETE :8080/api/v1/delete/coding | jq . >> basic_test_output.txt
 
 kill $PID
+
+echo "exit 0"

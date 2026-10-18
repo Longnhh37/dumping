@@ -1,10 +1,6 @@
 {
-  "reading": {
-    "title": "reading",
-    "status": "DONE"
-  },
-  "sleeping": {
-    "title": "sleeping",
+  "writing": {
+    "title": "writing",
     "status": "PENDING"
   }
 }
