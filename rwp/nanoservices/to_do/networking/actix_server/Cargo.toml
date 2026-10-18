@@ -6,5 +6,6 @@ edition = "2024"
 [dependencies]
 tokio = { version = "1.36", features = ["full"] }
 actix-web = "4.9"
+dotenvy = "0.15.7"
 to-do-core = { path = "../../core" }
 glue = { path = "../../../../glue", features = ["actix"] }

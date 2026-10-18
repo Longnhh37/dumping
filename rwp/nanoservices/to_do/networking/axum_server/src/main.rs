@@ -5,9 +5,14 @@ use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    let listener = TcpListener::bind("127.0.0.1:8080").await?;
+    dotenvy::dotenv().ok();
+    let url = std::env::var("WEB_URL").unwrap_or_else(|_| "127.0.0.1".to_string());
+    let port = std::env::var("WEB_PORT").unwrap_or_else(|_| "8080".to_string());
+    let address = format!("{url}:{port}");
+
+    let listener = TcpListener::bind(&address).await?;
     let app = Router::new().merge(api::router());
 
-    println!("Serving app on 127.0.0.1:8080");
+    println!("Serving app on {address}");
     axum::serve(listener, app).await
 }
