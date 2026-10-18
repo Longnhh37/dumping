@@ -1,5 +1,5 @@
 use glue::errors::{NanoServiceError, NanoServiceErrorStatus};
-use glue::safe_eject;
+use glue::errors::ResultExt;
 use serde::{Serialize, de::DeserializeOwned};
 use std::{
     collections::HashMap,
@@ -21,19 +21,18 @@ fn read_handle(path: &PathBuf) -> Result<Option<File>> {
     if !path.exists() {
         return Ok(None);
     }
-    safe_eject!(
-        File::open(path).map(Some),
-        NanoServiceErrorStatus::Unknown,
-        "Error opening file for reading"
-    )
+    File::open(path)
+        .map(Some)
+        .eject_ctx(NanoServiceErrorStatus::Unknown, "Error opening file for reading")
 }
 
 fn write_handle(path: &PathBuf) -> Result<File> {
-    safe_eject!(
-        OpenOptions::new().write(true).create(true).truncate(true).open(path),
-        NanoServiceErrorStatus::Unknown,
-        "Error opening JSON file for writing"
-    )
+    OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(path)
+        .eject_ctx(NanoServiceErrorStatus::Unknown, "Error opening JSON file for writing")
 }
 
 pub fn get_all<T: DeserializeOwned>() -> Result<HashMap<String, T>> {
@@ -41,33 +40,26 @@ pub fn get_all<T: DeserializeOwned>() -> Result<HashMap<String, T>> {
         return Ok(HashMap::new());
     };
     let mut contents = String::new();
-    safe_eject!(
-        file.read_to_string(&mut contents),
-        NanoServiceErrorStatus::Unknown,
-        "Error reading file to get all tasks"
-    )?;
+    file.read_to_string(&mut contents)
+        .eject_ctx(
+            NanoServiceErrorStatus::Unknown,
+            "Error reading file to get all tasks",
+        )?;
     if contents.trim().is_empty() {
         return Ok(HashMap::new());
     }
-    safe_eject!(
-        serde_json::from_str(&contents),
-        NanoServiceErrorStatus::Unknown,
-        "Error parsing JSON file"
-    )
+    serde_json::from_str(&contents)
+        .eject_ctx(NanoServiceErrorStatus::Unknown, "Error parsing JSON file")
 }
 
 pub fn save_all<T: Serialize>(tasks: &HashMap<String, T>) -> Result<()> {
     let mut file = write_handle(&store_path())?;
-    let json = safe_eject!(
-        serde_json::to_string_pretty(tasks),
+    let json = serde_json::to_string_pretty(tasks).eject_ctx(
         NanoServiceErrorStatus::Unknown,
-        "Error serializing JSON to save all tasks"
+        "Error serializing JSON to save all tasks",
     )?;
-    safe_eject!(
-        file.write_all(json.as_bytes()),
-        NanoServiceErrorStatus::Unknown,
-        "Error writing file"
-    )
+    file.write_all(json.as_bytes())
+        .eject_ctx(NanoServiceErrorStatus::Unknown, "Error writing file")
 }
 
 pub fn get_one<T: DeserializeOwned>(id: &str) -> Result<T> {
