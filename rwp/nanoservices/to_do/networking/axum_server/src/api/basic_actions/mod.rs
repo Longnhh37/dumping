@@ -3,12 +3,20 @@ pub mod delete;
 pub mod get;
 pub mod update;
 
-use axum::{Router, routing::{delete, get, post}};
+use axum::{
+    Router,
+    routing::{delete, get, post},
+};
 
 pub fn router() -> Router {
-    Router::new()
-        .route("/api/v1/get/all", get(get::get_all))
-        .route("/api/v1/get/{name}", get(get::get_by_name))
-        .route("/api/v1/delete/{name}", delete(delete::delete_by_name))
-        .route("/api/v1/create", post(create::create))
+    let get_routes = Router::new()
+        .route("/all", get(get::get_all))
+        .route("/{name}", get(get::get_by_name));
+
+    let api_v1 = Router::new()
+        .nest("/get", get_routes)
+        .route("/delete/{name}", delete(delete::delete_by_name))
+        .route("/create", post(create::create));
+
+    Router::new().nest("/api/v1", api_v1)
 }
