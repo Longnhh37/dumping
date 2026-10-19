@@ -12,7 +12,6 @@ struct NameForm {
 }
 
 async fn submit(Form(form): Form<NameForm>) -> Redirect {
-    println!(car)
     let name: String = form
         .name
         .as_deref()
