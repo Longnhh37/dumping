@@ -11,7 +11,38 @@ fn build_undirected(n: usize, edges: &[(usize, usize)]) -> UGraph {
     adj
 }
 
-fn hierholzer_undirected(mut adj: UGraph, start: usize, edges: usize) -> Option<Vec<usize>> {
+fn hierholzer_undirected_dfs(mut adj: UGraph, start: usize, edges: usize) -> Option<Vec<usize>> {
+    fn dfs(v: usize, adj: &mut UGraph, used: &mut [bool], path: &mut Vec<usize>) {
+        while let Some((u, id)) = adj[v].pop() {
+            if used[id] {
+                continue;
+            }
+
+            used[id] = true;
+            dfs(u, adj, used, path);
+        }
+
+        path.push(v);
+    }
+
+    let mut used = vec![false; edges];
+    let mut path = Vec::with_capacity(edges + 1);
+
+    dfs(start, &mut adj, &mut used, &mut path);
+
+    if path.len() != edges + 1 {
+        return None;
+    }
+
+    path.reverse();
+    Some(path)
+}
+
+fn hierholzer_undirected_iter_dfs(
+    mut adj: UGraph,
+    start: usize,
+    edges: usize,
+) -> Option<Vec<usize>> {
     let mut used = vec![false; edges];
     let mut stack = vec![start];
     let mut path = Vec::with_capacity(edges + 1);
@@ -51,7 +82,7 @@ fn undirected_circuit(n: usize, edges: &[(usize, usize)]) -> Option<Vec<usize>> 
         return None;
     }
     let start = adj.iter().position(|a| !a.is_empty())?;
-    hierholzer_undirected(adj, start, edges.len())
+    hierholzer_undirected_iter_dfs(adj, start, edges.len())
 }
 
 // Eulerian path (undiretcted): 0 or 2 vertex with odd degree
@@ -67,7 +98,7 @@ fn undirected_path(n: usize, edges: &[(usize, usize)]) -> Option<Vec<usize>> {
         [a, _] => *a,
         _ => return None,
     };
-    hierholzer_undirected(adj, start, edges.len())
+    hierholzer_undirected_iter_dfs(adj, start, edges.len())
 }
 
 fn main() {
