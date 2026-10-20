@@ -17,11 +17,9 @@ fn hierholzer_undirected_dfs(mut adj: UGraph, start: usize, edges: usize) -> Opt
             if used[id] {
                 continue;
             }
-
             used[id] = true;
             dfs(u, adj, used, path);
         }
-
         path.push(v);
     }
 
