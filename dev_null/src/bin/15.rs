@@ -2,7 +2,34 @@
 // Directed
 // ==================================================================
 
-fn hierholzer_directed(mut adj: Vec<Vec<usize>>, start: usize, edges: usize) -> Option<Vec<usize>> {
+fn hierholzer_directed_dfs(
+    mut adj: Vec<Vec<usize>>,
+    start: usize,
+    edges: usize,
+) -> Option<Vec<usize>> {
+    fn dfs(v: usize, adj: &mut [Vec<usize>], path: &mut Vec<usize>) {
+        while let Some(u) = adj[v].pop() {
+            dfs(u, adj, path);
+        }
+        path.push(v);
+    }
+
+    let mut path = Vec::with_capacity(edges + 1);
+    dfs(start, &mut adj, &mut path);
+
+    if path.len() != edges + 1 {
+        return None;
+    }
+
+    path.reverse();
+    Some(path)
+}
+
+fn hierholzer_directed_iter_dfs(
+    mut adj: Vec<Vec<usize>>,
+    start: usize,
+    edges: usize,
+) -> Option<Vec<usize>> {
     let mut stack = vec![start];
     let mut path = Vec::with_capacity(edges + 1);
 
@@ -42,7 +69,7 @@ fn directed_circuit(adj: &[Vec<usize>]) -> Option<Vec<usize>> {
         return None;
     }
     let start = (0..adj.len()).find(|&u| out_deg[u] > 0)?;
-    hierholzer_directed(adj.to_vec(), start, m)
+    hierholzer_directed_dfs(adj.to_vec(), start, m)
 }
 
 // Diretec Eulerian path (all in_deg == out deg) or (start: out - in = 1, end: in - out = 1)
@@ -70,7 +97,7 @@ fn directed_path(adj: &[Vec<usize>]) -> Option<Vec<usize>> {
     }
 
     let start = start.or_else(|| (0..adj.len()).find(|&u| out_deg[u] > 0))?;
-    hierholzer_directed(adj.to_vec(), start, m)
+    hierholzer_directed_dfs(adj.to_vec(), start, m)
 }
 
 fn main() {
