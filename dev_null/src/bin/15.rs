@@ -72,7 +72,7 @@ fn directed_circuit(adj: &[Vec<usize>]) -> Option<Vec<usize>> {
     hierholzer_directed_dfs(adj.to_vec(), start, m)
 }
 
-// Diretec Eulerian path (all in_deg == out deg) or (start: out - in = 1, end: in - out = 1)
+// Diretec Eulerian path (all in_deg == out deg) or (start: out - in = 1, end: in - out = 1, the rest: in == out)
 fn directed_path(adj: &[Vec<usize>]) -> Option<Vec<usize>> {
     let (in_deg, out_deg, m) = degrees(adj);
     if m == 0 {
