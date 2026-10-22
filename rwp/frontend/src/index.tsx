@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDom from "react-dom/client";
+import ReactDOM from "react-dom/client";
 
 const App = () => {
   return (
