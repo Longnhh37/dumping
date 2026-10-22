@@ -1,0 +1,10 @@
+# Node / frontend
+node_modules/
+npm-debug.log*
+
+# esbuild output
+public/bundle.js
+public/bundle.js.map
+
+# TypeScript
+*.tsbuildinfo
