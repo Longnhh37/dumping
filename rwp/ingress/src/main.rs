@@ -1,88 +1,83 @@
-use std::net::SocketAddr;
+use std::net::{Ipv4Addr, SocketAddr};
 use std::path::Path;
 
 use axum::{
     Router,
-    body::Body,
-    http,
+    http::{StatusCode, Uri, header},
     response::{Html, IntoResponse, Response},
     routing::get,
 };
 use rust_embed::RustEmbed;
 use tower_http::cors::{Any, CorsLayer};
 
-async fn index() -> Html<&'static str> {
-    Html(include_str!("../index.html"))
-}
+const INDEX_HTML: &str = include_str!("../index.html");
 
 #[derive(RustEmbed)]
 #[folder = "../frontend/public"]
 struct FrontendAssets;
 
-async fn serve_frontend_asset(path: String) -> Response<Body> {
-    let file = match Path::new(&path).file_name() {
-        Some(file) => file.to_str().unwrap(),
-        None => {
-            return Response::builder()
-                .status(404)
-                .body::<Body>("404 Not Found".into())
-                .unwrap()
-                .into_response();
-        }
-    };
-
-    match FrontendAssets::get(file) {
-        Some(content) => {
-            let mime_type = mime_guess::from_path(file)
-                .first_or_octet_stream()
-                .as_ref()
-                .to_string();
-            Response::builder()
-                .header("Content-Type", mime_type)
-                .header("Cache-Control", "public, max-age=604800")
-                .body(content.data.into())
-                .unwrap()
-        }
-        None => Response::builder()
-            .status(404)
-            .body("404 Not Found".into())
-            .unwrap(),
-    }
+async fn index() -> Html<&'static str> {
+    Html(INDEX_HTML)
 }
 
-async fn catch_all(uri: http::Uri) -> impl IntoResponse {
-    let path = uri.path().to_string();
-    if path.contains("/api/") {
-        return Response::builder()
-            .status(404)
-            .body("404 Not Found".into())
-            .unwrap();
+fn not_found() -> Response {
+    (StatusCode::NOT_FOUND, "404 Not Found").into_response()
+}
+
+fn serve_asset(path: &str) -> Response {
+    let Some(file) = Path::new(path).file_name().and_then(|f| f.to_str()) else {
+        return not_found();
+    };
+    let Some(content) = FrontendAssets::get(file) else {
+        return not_found();
+    };
+
+    let mime = mime_guess::from_path(file).first_or_octet_stream();
+
+    (
+        [
+            (header::CONTENT_TYPE, mime.as_ref().to_owned()),
+            (header::CACHE_CONTROL, "public, max-age=604800".to_owned()),
+        ],
+        content.data,
+    )
+        .into_response()
+}
+
+async fn catch_all(uri: Uri) -> Response {
+    let path = uri.path();
+
+    if path.starts_with("/api/") {
+        return not_found();
     }
-    if path.contains("frontend/public") {
-        return serve_frontend_asset(path).await;
-    }
-    let file_type = mime_guess::from_path(&path)
+
+    let is_html = mime_guess::from_path(path)
         .first_raw()
-        .unwrap_or("text/html");
-    if !file_type.contains("text/html") {
-        return serve_frontend_asset(path).await;
+        .is_none_or(|m| m == "text/html");
+
+    if is_html {
+        index().await.into_response()
+    } else {
+        serve_asset(path)
     }
-    index().await.into_response()
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods(Any)
         .allow_headers(Any);
 
     let app = Router::new()
-        .layer(cors)
         .route("/", get(index))
-        .fallback(catch_all);
+        .fallback(catch_all)
+        .layer(cors);
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 8001));
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    let addr = SocketAddr::from((Ipv4Addr::UNSPECIFIED, 8001));
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    println!("listening on http://{addr}");
+
+    axum::serve(listener, app).await?;
+    Ok(())
 }
