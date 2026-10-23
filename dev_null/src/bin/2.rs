@@ -19,7 +19,7 @@ mod backtrack {
             let mut avail = !(cols | d1 | d2) & full;
             let mut count = 0;
             while avail != 0 {
-                let bit = avail & avail.wrapping_neg();
+                let bit = avail.isolate_lowest_one();
                 avail ^= bit;
                 count += go(
                     n,
