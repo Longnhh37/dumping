@@ -17,7 +17,7 @@ pub fn router() -> Router {
         .nest("/get", get_routes)
         .route("/delete/{name}", delete(delete::delete_by_name))
         .route("/create", post(create::create))
-        .route("update", patch(update::update));
+        .route("/update", patch(update::update));
 
 
     Router::new().nest("/api/v1", api_v1)
