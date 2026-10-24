@@ -7,11 +7,11 @@ fn hierholzer_directed_dfs(
     start: usize,
     edges: usize,
 ) -> Option<Vec<usize>> {
-    fn dfs(v: usize, adj: &mut [Vec<usize>], path: &mut Vec<usize>) {
-        while let Some(u) = adj[v].pop() {
-            dfs(u, adj, path);
+    fn dfs(u: usize, adj: &mut [Vec<usize>], path: &mut Vec<usize>) {
+        while let Some(v) = adj[u].pop() {
+            dfs(v, adj, path);
         }
-        path.push(v);
+        path.push(u);
     }
 
     let mut path = Vec::with_capacity(edges + 1);
@@ -33,11 +33,11 @@ fn hierholzer_directed_iter_dfs(
     let mut stack = vec![start];
     let mut path = Vec::with_capacity(edges + 1);
 
-    while let Some(&v) = stack.last() {
-        if let Some(u) = adj[v].pop() {
-            stack.push(u);
+    while let Some(&u) = stack.last() {
+        if let Some(v) = adj[u].pop() {
+            stack.push(v);
         } else {
-            path.push(v);
+            path.push(u);
             stack.pop();
         }
     }

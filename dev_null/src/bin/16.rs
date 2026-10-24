@@ -12,15 +12,15 @@ fn build_undirected(n: usize, edges: &[(usize, usize)]) -> UGraph {
 }
 
 fn hierholzer_undirected_dfs(mut adj: UGraph, start: usize, edges: usize) -> Option<Vec<usize>> {
-    fn dfs(v: usize, adj: &mut UGraph, used: &mut [bool], path: &mut Vec<usize>) {
-        while let Some((u, id)) = adj[v].pop() {
+    fn dfs(u: usize, adj: &mut UGraph, used: &mut [bool], path: &mut Vec<usize>) {
+        while let Some((v, id)) = adj[u].pop() {
             if used[id] {
                 continue;
             }
             used[id] = true;
-            dfs(u, adj, used, path);
+            dfs(v, adj, used, path);
         }
-        path.push(v);
+        path.push(u);
     }
 
     let mut used = vec![false; edges];
@@ -45,19 +45,19 @@ fn hierholzer_undirected_iter_dfs(
     let mut stack = vec![start];
     let mut path = Vec::with_capacity(edges + 1);
 
-    while let Some(&v) = stack.last() {
+    while let Some(&u) = stack.last() {
         let mut next = None;
-        while let Some((u, id)) = adj[v].pop() {
+        while let Some((v, id)) = adj[u].pop() {
             if !used[id] {
                 used[id] = true;
-                next = Some(u);
+                next = Some(v);
                 break;
             }
         }
         match next {
             Some(u) => stack.push(u),
             None => {
-                path.push(v);
+                path.push(u);
                 stack.pop();
             }
         }

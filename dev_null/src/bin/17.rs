@@ -1,20 +1,20 @@
 fn hamiltonian_path_backtrack(adj: &[Vec<usize>]) -> Option<Vec<usize>> {
-    fn dfs(v: usize, adj: &[Vec<usize>], visited: &mut [bool], path: &mut Vec<usize>) -> bool {
-        visited[v] = true;
-        path.push(v);
+    fn dfs(u: usize, adj: &[Vec<usize>], visited: &mut [bool], path: &mut Vec<usize>) -> bool {
+        visited[u] = true;
+        path.push(u);
 
         if path.len() == adj.len() {
             return true;
         }
 
-        for &u in &adj[v] {
-            if !visited[u] && dfs(u, adj, visited, path) {
+        for &v in &adj[u] {
+            if !visited[v] && dfs(v, adj, visited, path) {
                 return true;
             }
         }
 
-        visited[v] = false;
         path.pop();
+        visited[u] = false;
         false
     }
 

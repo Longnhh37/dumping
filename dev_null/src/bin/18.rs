@@ -7,22 +7,22 @@ fn de_bruijn_euler(k: usize, n: usize) -> Vec<usize> {
         return (0..k).collect();
     }
 
-    let nv = k.pow(n as u32 - 1);
-    let mut next = vec![0usize; nv];
-    let mut labels = Vec::with_capacity(nv * k);
+    let nu = k.pow(n as u32 - 1);
+    let mut next = vec![0usize; nu];
+    let mut labels = Vec::with_capacity(nu * k);
 
-    fn dfs(v: usize, k: usize, nv: usize, next: &mut [usize], labels: &mut Vec<usize>) {
-        while next[v] < k {
-            let c = next[v];
-            next[v] += 1;
+    fn dfs(u: usize, k: usize, nu: usize, next: &mut [usize], labels: &mut Vec<usize>) {
+        while next[u] < k {
+            let c = next[u];
+            next[u] += 1;
 
-            let u = (v * k + c) % nv;
-            dfs(u, k, nv, next, labels);
+            let v = (u * k + c) % nu;
+            dfs(v, k, nu, next, labels);
             labels.push(c);
         }
     }
 
-    dfs(0, k, nv, &mut next, &mut labels);
+    dfs(0, k, nu, &mut next, &mut labels);
     labels.reverse();
     labels
 }
