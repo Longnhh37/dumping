@@ -1,1 +1,1 @@
-I dump my code here.
+Everything I learned is dumped here.
