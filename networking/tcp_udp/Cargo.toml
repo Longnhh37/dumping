@@ -1,5 +1,5 @@
 [package]
-name = "sockets"
+name = "tcp_udp"
 version = "0.1.0"
 edition = "2024"
 
