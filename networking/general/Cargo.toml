@@ -1,0 +1,8 @@
+[package]
+name = "general"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+http = "1.5.0"
+url = "2.5.8"
