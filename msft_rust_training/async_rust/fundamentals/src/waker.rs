@@ -32,5 +32,28 @@ impl Future for Delay {
         }
 
         *self.waker_stored.lock().unwrap() = Some(cx.waker().clone());
+
+        if !self.started {
+            self.started = true;
+            let completed = Arc::clone(&self.completed);
+            let waker = Arc::clone(&self.waker_stored);
+            let duration = self.duration;
+
+            thread::spawn(move || {
+                thread::sleep(duration);
+                *completed.lock().unwrap() = true;
+
+                // Wake the executor
+                if let Some(w) = waker.lock().unwrap().take() {
+                    w.wake();
+                }
+            });
+        }
+
+        if *self.completed.lock().unwrap() {
+            return Poll::Ready(());
+        }
+
+        Poll::Pending
     }
 }
