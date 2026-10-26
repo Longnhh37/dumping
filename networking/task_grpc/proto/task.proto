@@ -1,0 +1,34 @@
+syntax = "proto3";
+package task.v1;
+
+service TaskService {
+  // 1. Unary
+  rpc CreateTask(CreateTaskRequest) returns (Task);
+  // 2. Server streaming
+  rpc ListTasks(ListTasksRequest) returns (stream Task);
+  // 3. Client streaming
+  rpc ImportTasks(stream CreateTaskRequest) returns (ImportSummary);
+  // 4. Bidirectional streaming: client can switch filter at any time
+  rpc Watch(stream WatchFilter) returns (stream Task);
+}
+
+message Task {
+  uint64 id = 1;
+  string title = 2;
+  repeated string tags = 3;
+  bool done = 4;
+}
+
+message CreateTaskRequest {
+  string title = 1;
+  repeated string tags = 2;
+}
+
+message ListTasksRequest { string tag = 1; }
+
+message ImportSummary {
+  uint32 created = 1;
+  uint32 rejected = 2;
+}
+
+message WatchFilter { string tag = 1; }

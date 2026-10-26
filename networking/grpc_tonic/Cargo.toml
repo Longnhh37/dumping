@@ -1,8 +1,0 @@
-[package]
-name = "grpc_tonic"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-tokio = { version = "1.54.1", features = ["rt-multi-thread"] }
-tonic = "0.14.6"
