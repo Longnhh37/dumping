@@ -44,11 +44,31 @@ export async function getCall<X>(url: string, expectedResponse: number) {
   return handleRequest<X>({ method: "get", url }, expectedResponse);
 }
 
+// POST with a body: only X needs to be specified, T is inferred from `body`
+export async function postCall<X, T = unknown>(
+  url: string,
+  body: T,
+  expectedResponse: number,
+) {
+  return handleRequest<X>(
+    { method: "post", url, data: body },
+    expectedResponse,
+  );
+}
+
+// POST without a body (logout, trigger action, ...)
+export async function postCallNoBody<X>(
+  url: string,
+  expectedResponse: number,
+) {
+  return handleRequest<X>({ method: "post", url }, expectedResponse);
+}
+
 export async function deleteCall<X>(url: string, expectedResponse: number) {
   return handleRequest<X>({ method: "delete", url }, expectedResponse);
 }
 
-export async function putCall<T, X>(
+export async function putCall<X, T = unknown>(
   url: string,
   body: T,
   expectedResponse: number,
@@ -56,7 +76,7 @@ export async function putCall<T, X>(
   return handleRequest<X>({ method: "put", url, data: body }, expectedResponse);
 }
 
-export async function patchCall<T, X>(
+export async function patchCall<X, T = unknown>(
   url: string,
   body: T,
   expectedResponse: number,
