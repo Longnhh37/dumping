@@ -19,7 +19,7 @@ This project teaches gRPC with **tonic**, a popular Rust gRPC library, through f
 
 ---
 
-## 0. What is gRPC? (3 minutes)
+## 0. What is gRPC?
 
 - **gRPC** is a way for two programs to call each other over a network, much like calling a local function.
 - It runs over **HTTP/2**, and data is encoded with **Protocol Buffers (protobuf)**, which makes it compact, fast, and strongly typed.
