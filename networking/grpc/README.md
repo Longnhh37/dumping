@@ -15,7 +15,6 @@ This project teaches gRPC with **tonic**, a popular Rust gRPC library, through f
 - [Lesson 5 — Bidirectional streaming](#lesson-5--bidirectional-streaming)
 - [Lesson 6 — Metadata, interceptors, and deadlines](#lesson-6--metadata-interceptors-and-deadlines)
 - [Common problems](#common-problems)
-- [Exercises](#exercises)
 
 ---
 
