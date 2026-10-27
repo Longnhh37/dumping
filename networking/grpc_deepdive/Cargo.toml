@@ -1,0 +1,14 @@
+[package]
+name = "grpc_deepdive"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tonic = "0.14.6"          # gRPC framework (server + client)
+tonic-prost = "0.14.6"     # Protobuf codec for tonic
+prost = "0.14.4"          # serialize and deserialize Protocol Buffers
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
+tokio-stream = "0.1"    # utilities for working with streams
+
+[build-dependencies]
+tonic-prost-build = "0.14.6" # compiles .proto files into Rust code

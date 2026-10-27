@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+// The package name becomes the module name included in Rust.
+package grpc_deepdive;
+
+// ---------- 1. UNARY: one request -> one response ----------
+service Greeter {
+  rpc SayHello (HelloRequest) returns (HelloReply);
+}
+
+message HelloRequest { string name = 1; }
+message HelloReply   { string message = 1; }
+
+service Calculator {
+  // Unary RPC with meaningful errors
+  rpc Divide (DivideRequest) returns (DivideReply);
+
+  // ---------- 2. SERVER STREAMING: one request -> multiple responses ----------
+  rpc Fibonacci (FibonacciRequest) returns (stream FibonacciReply);
+
+  // ---------- 3. CLIENT STREAMING: multiple requests -> one response ----------
+  rpc Sum (stream NumberRequest) returns (SumReply);
+}
+
+message DivideRequest { double a = 1; double b = 2; }
+message DivideReply   { double result = 1; }
+
+message FibonacciRequest { uint32 count = 1; }
+message FibonacciReply   { uint32 index = 1; uint64 value = 2; }
+
+message NumberRequest { int64 value = 1; }
+message SumReply      { uint32 count = 1; int64 total = 2; }
+
+// ---------- 4. BIDIRECTIONAL STREAMING: multiple requests <-> multiple responses ----------
+service Chat {
+  rpc Talk (stream ChatMessage) returns (stream ChatMessage);
+}
+
+message ChatMessage { string user = 1; string text = 2; }
