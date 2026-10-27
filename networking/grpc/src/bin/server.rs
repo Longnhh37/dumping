@@ -4,14 +4,14 @@ use std::time::Duration;
 
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
-use tonic::{transport::Server, Request, Response, Status, Streaming};
+use tonic::{Request, Response, Status, Streaming, transport::Server};
 
-use grpc_deepdive::pb::{
+use grpc::pb::{
+    ChatMessage, DivideReply, DivideRequest, FibonacciReply, FibonacciRequest, HelloReply,
+    HelloRequest, NumberRequest, SumReply,
     calculator_server::{Calculator, CalculatorServer},
     chat_server::{Chat, ChatServer},
     greeter_server::{Greeter, GreeterServer},
-    ChatMessage, DivideReply, DivideRequest, FibonacciReply, FibonacciRequest, HelloReply,
-    HelloRequest, NumberRequest, SumReply,
 };
 
 // ============================================================

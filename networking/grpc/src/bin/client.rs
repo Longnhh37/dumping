@@ -6,7 +6,7 @@ use tokio::sync::mpsc;
 use tokio_stream::{wrappers::ReceiverStream, StreamExt};
 use tonic::{transport::Channel, Code, Request, Status};
 
-use grpc_deepdive::pb::{
+use grpc::pb::{
     calculator_client::CalculatorClient, chat_client::ChatClient, greeter_client::GreeterClient,
     ChatMessage, DivideRequest, FibonacciRequest, HelloRequest, NumberRequest,
 };
