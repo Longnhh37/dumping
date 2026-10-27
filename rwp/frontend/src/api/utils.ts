@@ -8,7 +8,7 @@ function getToken(): string {
   return localStorage.getItem("token") ?? "";
 }
 
-async function request<X>(
+async function handleRequest<X>(
   config: AxiosRequestConfig,
   expectedResponse: number,
 ): Promise<ApiResult<X>> {
@@ -41,13 +41,28 @@ async function request<X>(
 }
 
 export async function getCall<X>(url: string, expectedResponse: number) {
-  return request<X>({ method: "get", url }, expectedResponse);
+  return handleRequest<X>({ method: "get", url }, expectedResponse);
 }
 
-export async function postCall<T, X>(
+export async function deleteCall<X>(url: string, expectedResponse: number) {
+  return handleRequest<X>({ method: "delete", url }, expectedResponse);
+}
+
+export async function putCall<T, X>(
   url: string,
   body: T,
   expectedResponse: number,
 ) {
-  return request<X>({ method: "post", url, data: body }, expectedResponse);
+  return handleRequest<X>({ method: "put", url, data: body }, expectedResponse);
+}
+
+export async function patchCall<T, X>(
+  url: string,
+  body: T,
+  expectedResponse: number,
+) {
+  return handleRequest<X>(
+    { method: "patch", url, data: body },
+    expectedResponse,
+  );
 }
