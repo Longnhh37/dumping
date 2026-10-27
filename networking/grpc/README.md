@@ -49,10 +49,10 @@ This project teaches gRPC with **tonic**, a popular Rust gRPC library, through f
 
 ```text
 grpc_deepdive/
-├── Cargo.toml                 # dependencies
+├── Cargo.toml
 ├── build.rs                   # compiles .proto into Rust code before compilation
 ├── proto/
-│   └── deepdive.proto         # API contract (start here)
+│   └── grpc.proto             # API contract (start here)
 └── src/
     ├── lib.rs                 # includes generated code (the `pb` module)
     └── bin/
@@ -76,9 +76,6 @@ cargo run --bin server      # terminal 1
 cargo run --bin client      # terminal 2
 ```
 
-> **Note:** With a newer Rust version (>= 1.85) you can delete `Cargo.lock` to resolve the latest library versions.
-> The included `Cargo.lock` file pins dependency versions that work with Rust 1.75.
-
 ---
 
 ## 3. How it works
@@ -90,7 +87,7 @@ deepdive.proto
       ▼
 Rust code in OUT_DIR
       │
-      │  src/lib.rs: tonic::include_proto!("grpc_deepdive")
+      │  src/lib.rs: tonic::include_proto!("grpc")
       ▼
 module `pb`
       │
