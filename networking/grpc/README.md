@@ -303,12 +303,3 @@ If the deadline passes, the client receives `Code::DeadlineExceeded`.
 | Changes to `.proto` do not appear in generated code | Run `cargo build`. `build.rs` reruns when the `.proto` file changes if it has `cargo:rerun-if-changed` |
 
 ---
-
-## Exercises
-
-1. Add `rpc Multiply` to `Calculator` (edit the `.proto` file, implement it on the server, call it from the client).
-2. Add field `string language = 2;` to `HelloRequest`, and reply "Hello" or "Xin chào" based on the language.
-3. Make `Fibonacci` stop when the client cancels (observe the log `client disconnected`).
-4. Turn `Chat` into a multi-user chat room using `tokio::sync::broadcast`.
-5. Add TLS (`ServerTlsConfig`) and a health check (`tonic-health`).
-6. Try calling the server using `grpcurl` (requires enabling `tonic-reflection`).
