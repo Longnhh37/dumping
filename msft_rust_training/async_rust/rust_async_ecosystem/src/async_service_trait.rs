@@ -62,8 +62,7 @@ async fn cache_demo<C: Cache>(cache: &C, label: &str) {
     println!("[{label}] greeting = {val:?}");
 }
 
-#[tokio::main]
-async fn main() {
+async fn example() {
     let mem = MemoryCache::new();
     cache_demo(&mem, "memory").await;
 
