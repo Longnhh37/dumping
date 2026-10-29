@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::{future::Future, time::Duration};
 use tokio::sync::{Mutex, RwLock, Semaphore, broadcast, mpsc, oneshot, watch};
 
 #[tokio::main]
@@ -35,4 +36,41 @@ async fn main() {
     let (tx, rx) = watch::channel(0u64);
     tx.send(42).unwrap();
     println!("Latest: {}", *rx.borrow());
+
+    // semaphore
+    let urls = vec!["sample.com", "example.com"];
+    let fetch = async |url: &str| -> String {
+        std::thread::sleep(Duration::from_secs(3));
+        "Hello".to_string()
+    };
+    let tasks: Vec<_> = urls
+        .into_iter()
+        .map(|url| move || async move { fetch(url).await })
+        .collect();
+    let res = run_with_limit(tasks, 10).await;
+}
+
+async fn run_with_limit<F, Fut, T>(tasks: Vec<F>, limit: usize) -> Vec<T>
+where
+    F: FnOnce() -> Fut + Send + 'static,
+    Fut: Future<Output = T> + Send + 'static,
+    T: Send + 'static,
+{
+    let semaphore = Arc::new(Semaphore::new(limit));
+    let mut handles = Vec::new();
+
+    for task in tasks {
+        let permit = Arc::clone(&semaphore);
+        let handle = tokio::spawn(async move {
+            let _permit = permit.acquire().await.unwrap();
+            task().await
+        });
+        handles.push(handle);
+    }
+
+    let mut res = Vec::new();
+    for handle in handles {
+        res.push(handle.await.unwrap());
+    }
+    res
 }
