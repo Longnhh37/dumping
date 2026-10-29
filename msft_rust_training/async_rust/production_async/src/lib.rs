@@ -1,3 +1,2 @@
+mod exercises;
 mod stream;
-mod production_patterns;
-
