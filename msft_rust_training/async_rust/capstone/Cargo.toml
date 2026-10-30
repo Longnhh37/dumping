@@ -5,5 +5,11 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.104"
+env_filter = "2.0.0"
 futures = "0.3.34"
+thiserror = "2.0.21"
 tokio = { version = "1.54.1", features = ["full"] }
+tokio-stream = "0.1.19"
+tokio-util = { version = "0.7.20", features = ["codec", "rt"] }
+tracing = "0.1.44"
+tracing-subscriber = "0.3.23"
