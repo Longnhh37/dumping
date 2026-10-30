@@ -1,6 +1,6 @@
 use std::{io::Read, net::TcpListener};
 
-use sockets::prompt_address;
+use tcp_udp::prompt_address;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Prompt the user for a server binding.

@@ -1,6 +1,6 @@
 use std::net::UdpSocket;
 
-use sockets::{prompt, prompt_address};
+use tcp_udp::{prompt, prompt_address};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Prompt the user for a server address.

@@ -3,5 +3,5 @@
 version = 4
 
 [[package]]
-name = "sockets"
+name = "tcp_udp"
 version = "0.1.0"
