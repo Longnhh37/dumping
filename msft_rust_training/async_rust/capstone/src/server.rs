@@ -1,5 +1,11 @@
+use std::time::Duration;
+
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpListener;
+
+pub struct Config {
+    pub idle_timeout: Duration,
+}
 
 pub async fn serve() -> anyhow::Result<()> {
     let listener = TcpListener::bind("127.0.0.1:8080").await?;
