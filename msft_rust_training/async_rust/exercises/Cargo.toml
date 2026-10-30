@@ -1,0 +1,9 @@
+[package]
+name = "exercises"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+futures = "0.3.34"
+tokio = { version = "1.54.1", features = ["full"] }
+tokio-stream = { version = "0.1.19", features = ["full"] }
