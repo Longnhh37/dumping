@@ -10,7 +10,7 @@ pub struct Message {
 }
 
 impl Message {
-    // reguler chat line: `nick: text`
+    // regular chat line: `nick: text`
     pub fn chat(sender: ClientId, nick: &str, text: &str) -> Self {
         Self::new(sender, format!("{nick}: {text}\n"))
     }
