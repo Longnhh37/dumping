@@ -1,0 +1,2 @@
+{"timestamp":"2026-10-31T08:30:48.747709Z","level":"INFO","fields":{"message":"hello from both layers"},"target":"layered_span"}
+{"timestamp":"2026-10-31T08:30:54.236814Z","level":"INFO","fields":{"message":"hello from both layers"},"target":"layered_span"}
