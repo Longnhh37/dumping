@@ -22,8 +22,7 @@ struct WindowIter<'data> {
 }
 
 impl<'data> LendingIterator for WindowIter<'data> {
-    type Item<'a>
-        = &'a [u8]
+    type Item<'a> = &'a [u8]
     where
         Self: 'a;
 
