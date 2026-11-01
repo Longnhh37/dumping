@@ -2,7 +2,7 @@ use io_uring::{IoUring, opcode, types};
 use std::{
     fs::File,
     io,
-    os::{fd::AsRawFd, fs::AsRawFd},
+    os::{fd::AsRawFd, fd::AsRawFd},
 };
 
 fn main() -> io::Result<()> {

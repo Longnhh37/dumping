@@ -6,3 +6,5 @@ edition = "2024"
 [dependencies]
 io-uring = "0.7.15"
 libc = "0.2.191"
+slab = "0.4.12"
+tokio-uring = "0.5.0"
