@@ -37,7 +37,7 @@ impl std::ops::Div<Quantity<Seconds>> for Quantity<Meters> {
     }
 }
 
-fn main() {
+fn example() {
     let dist = Quantity::<Meters>::new(100.0);
     let time = Quantity::<Seconds>::new(9.58);
     let speed = dist / time; // Quantity<MetersPerSecond>
