@@ -6,5 +6,6 @@ mod generalized_algebraic_data_types;
 mod generic_associated_types;
 mod marker_trait;
 mod mixin;
-mod new_type_type_state;
+mod new_type;
 mod trait_hierarchies;
+mod type_state;
