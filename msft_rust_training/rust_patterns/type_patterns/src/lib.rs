@@ -13,3 +13,4 @@ mod new_type;
 mod phantom_data;
 mod trait_hierarchies;
 mod type_state;
+mod unit_of_measure;
