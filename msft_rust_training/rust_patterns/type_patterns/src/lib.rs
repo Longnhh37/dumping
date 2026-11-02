@@ -1,5 +1,6 @@
 mod any;
 mod associated_ty_generic_param;
+mod builder;
 mod dyn_compatible;
 mod extension_trait;
 mod generalized_algebraic_data_types;
