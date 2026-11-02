@@ -43,5 +43,5 @@ fn example() {
     let speed = dist / time; // Quantity<MetersPerSecond>
     println!("Speed: {:.2} m/s", speed.value); // 10.44 m/s
 
-    // let nonsense = dist + time; // ❌ Compile error: can't add Meters + Seconds
+    // let nonsense = dist + time; // Compile error: can't add Meters + Seconds
 }
