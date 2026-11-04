@@ -1,5 +1,5 @@
 [package]
-name = "fundamentals"
+name = "io_uring_fundamentals"
 version = "0.1.0"
 edition = "2024"
 
