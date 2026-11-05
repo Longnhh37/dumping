@@ -11,20 +11,16 @@ struct ServerConfig {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Deserialize from JSON:
     let json_input = r#"{
         "name": "hw-diag",
         "port": 8080
     }"#;
     let config: ServerConfig = serde_json::from_str(json_input)?;
     println!("{config:?}");
-    // ServerConfig { name: "hw-diag", port: 8080, max_connections: 0, tls_cert_path: None }
 
-    // Serialize to JSON:
     let output = serde_json::to_string_pretty(&config)?;
     println!("{output}");
 
-    // Same struct, different format — no code changes:
     let toml_input = r#"
         name = "hw-diag"
         port = 8080
