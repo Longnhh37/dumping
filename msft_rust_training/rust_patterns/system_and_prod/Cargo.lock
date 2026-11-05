@@ -3,6 +3,12 @@
 version = 4
 
 [[package]]
+name = "bumpalo"
+version = "3.20.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72f5acc6cb2ba439de613abc23857ec3d78374d8ed5ac84e9d11336e87da8649"
+
+[[package]]
 name = "equivalent"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -107,6 +113,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "slab"
+version = "0.4.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
+
+[[package]]
 name = "syn"
 version = "3.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -121,9 +133,12 @@ dependencies = [
 name = "system_and_prod"
 version = "0.1.0"
 dependencies = [
+ "bumpalo",
  "serde",
  "serde_json",
+ "slab",
  "toml",
+ "typed-arena",
 ]
 
 [[package]]
@@ -164,6 +179,12 @@ name = "toml_writer"
 version = "1.2.0+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "009dbb7700f11c55ef83aebbe4c0e9cf1f1ac0844bd8d6f00dc38f302026e13a"
+
+[[package]]
+name = "typed-arena"
+version = "2.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6af6ae20167a9ece4bcb41af5b80f8a1f1df981f6391189ce00fd257af04126a"
 
 [[package]]
 name = "unicode-ident"
