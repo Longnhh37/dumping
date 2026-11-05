@@ -1,7 +1,7 @@
 use std::hint::black_box;
 
 use criterion::{BatchSize, BenchmarkId, Criterion, criterion_group, criterion_main};
-use system_and_prod::how_to_bench::sort_unique;
+use system_and_prod::how_to_proptest::sort_unique;
 
 fn bench_sort_unique(c: &mut Criterion) {
     let mut group = c.benchmark_group("sort_unique");
