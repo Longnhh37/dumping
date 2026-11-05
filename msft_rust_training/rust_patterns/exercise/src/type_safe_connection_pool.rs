@@ -1,7 +1,7 @@
 // Real-world systems need connection pools where connections move through well-defined states.
 // Here’s how the typestate pattern enforces correctness in a production pool
 
-use std::{marker::PhantomData, os::unix::process};
+use std::marker::PhantomData;
 
 // States
 struct Idle;
