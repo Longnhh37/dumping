@@ -1,6 +1,6 @@
 //! Task Identifiers
 //!
-//! Invariant: every 'TaskId' returned by ['TaskId::next'] is unique within the
+//! Invariant: every `TaskId` returned by [`TaskId::next`] is unique within the
 //! lifetime of the process. The inner value is private, so callers cannot forge an ID
 
 use std::fmt;

@@ -13,8 +13,8 @@ use crate::work::WorkItem;
 /// The outcome of one executed task.
 ///
 /// # Invariant
-/// Fields are private and the only constructors are the 'From' impls below,
-/// so a 'TaskResult' can only be built from a task that actually finished
+/// Fields are private and the only constructors are the `From` impls below,
+/// so a `TaskResult` can only be built from a task that actually finished
 /// (`Task<Completed<R>>` or `Task<Failed>`).
 #[derive(Debug)]
 pub struct TaskResult<R> {
@@ -39,17 +39,17 @@ impl<R> TaskResult<R> {
         &self.outcome
     }
 
-    /// 'true' if the task completed successfully.
+    /// `true` if the task completed successfully.
     pub fn is_ok(&self) -> bool {
         self.outcome.is_ok()
     }
 
-    /// 'true' if the task failed.
+    /// `true` if the task failed.
     pub fn is_err(&self) -> bool {
         self.outcome.is_err()
     }
 
-    /// Converts a failed outcome into a ['SchedulerError::TaskFailed'].
+    /// Converts a failed outcome into a [`SchedulerError::TaskFailed`].
     pub fn into_result(self) -> Result<R, SchedulerError> {
         let Self { id, outcome, .. } = self;
         outcome.map_err(|msg| SchedulerError::TaskFailed(id, msg))
@@ -78,15 +78,15 @@ impl<R> From<Task<Failed>> for TaskResult<R> {
     }
 }
 
-/// A thread pool that runs ['WorkItem']s and collects their ['TaskResult']s.
+/// A thread pool that runs [`WorkItem`]s and collects their [`TaskResult`]s.
 ///
 /// # Invariant
-/// - 'sender' is 'Some' until the scheduler is closed. Closing it drop the sender, which
-///   makes every worker's 'recv()' fail and the workers exit.
+/// - `sender` is `Some` until the scheduler is closed. Closing it drop the sender, which
+///   makes every worker's `recv()` fail and the workers exit.
 /// - A panic inside a task is caught and reported as a failed task, so a worker thread
 ///   never dies because of user code.
 ///
-/// Dropping the scheduler without calling ['Scheduler::shutdown'] still waits for
+/// Dropping the scheduler without calling [`Scheduler::shutdown`] still waits for
 /// all queued tasks to finish (results are discarded).
 ///
 /// ```
@@ -105,14 +105,14 @@ pub struct Scheduler<R: Send + 'static> {
 }
 
 impl<R: Send + 'static> Scheduler<R> {
-    /// Spawn 'num_workers' worker threads (at least 1).
+    /// Spawn `num_workers` worker threads (at least 1).
     pub fn new(num_workers: usize) -> Self {
         let num_workers = num_workers.max(1);
 
         let (work_tx, work_rx) = mpsc::channel::<WorkItem<R>>();
         let (result_tx, result_rx) = mpsc::channel::<TaskResult<R>>();
 
-        // 'mpsc::Receiver' is not 'Clone', so workers share it behind a mutex.
+        // `mpsc::Receiver` is not `Clone`, so workers share it behind a mutex.
         let work_rx = Arc::new(Mutex::new(work_rx));
 
         let workers = (0..num_workers)
@@ -126,7 +126,7 @@ impl<R: Send + 'static> Scheduler<R> {
             })
             .collect();
 
-        // The original 'result_tx' is dropped here, so the result channel closes
+        // The original `result_tx` is dropped here, so the result channel closes
         // as soon as every worker exited.
         Self {
             sender: Some(work_tx),
@@ -166,11 +166,11 @@ impl<R: Send + 'static> Scheduler<R> {
         resutls
     }
 
-    /// Idempotent: safe to call from both 'shutdown' or 'Drop'.
+    /// Idempotent: safe to call from both `shutdown` or `Drop`.
     fn join_workers(&mut self) {
         self.sender = None;
         for handle in self.workers.drain(..) {
-            // Tasks run under 'catch_unwind', so a join error would mean a bug
+            // Tasks run under `catch_unwind`, so a join error would mean a bug
             // in the worker loop itself. Results already sent stay collected.
             let _ = handle.join();
         }
@@ -206,7 +206,7 @@ fn worker_loop<R: Send + 'static>(
 }
 
 /// Runs one item and drives its typestate:
-/// 'Pending' -> Running -> Completed<R> | Failed'.
+/// `Pending` -> Running -> Completed<R> | Failed'.
 ///
 /// The value (or error) is handed to the transition itself, and the result is
 /// built from the finished task, never from loose fields.

@@ -6,10 +6,10 @@ use crate::task::{Pending, Task};
 /// A boxed one-shot closure that computes a task's result.
 pub(crate) type Job<R> = Box<dyn FnOnce() -> Result<R, String> + Send + 'static>;
 
-/// A ['Task'] in the 'Pending' state plus the closure that does the work.
+/// A [`Task`] in the `Pending` state plus the closure that does the work.
 ///
 /// # Invariant
-/// A 'WorkItem' always holds a 'Pending' task: the only way to advance the
+/// A `WorkItem` always holds a `Pending` task: the only way to advance the
 /// lifecycle is for a worker to consume the item
 pub struct WorkItem<R> {
     task: Task<Pending>,
@@ -17,7 +17,7 @@ pub struct WorkItem<R> {
 }
 
 impl<R: Send + 'static> WorkItem<R> {
-    /// Creates a work item. A fresh unique ['TaskId'] is assigned automatically.
+    /// Creates a work item. A fresh unique [`TaskId`] is assigned automatically.
     pub fn new<F>(name: impl Into<String>, work: F) -> Self
     where
         F: FnOnce() -> Result<R, String> + Send + 'static,

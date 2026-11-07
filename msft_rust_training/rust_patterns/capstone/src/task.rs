@@ -8,7 +8,7 @@
 //!                                 + ------------fail(error)------> Task<Failed>
 //! ```
 //!
-//! Because 'complete' needs a value and 'fail' needs an error, a finished task
+//! Because `complete` needs a value and `fail` needs an error, a finished task
 //! cannot exist without its outcome.
 
 use std::fmt;
@@ -16,13 +16,13 @@ use std::fmt;
 use crate::id::TaskId;
 
 mod sealed {
-    /// Prevents downstream crates from implementing 'TaskState'.
+    /// Prevents downstream crates from implementing `TaskState`.
     pub trait Sealed {}
 }
 
 /// Implemented only by the four lifecycle states.
 pub trait TaskState: sealed::Sealed {
-    /// Human-readable lable used by 'Debug'.
+    /// Human-readable lable used by `Debug`.
     const LABEL: &'static str;
 }
 
@@ -64,7 +64,7 @@ impl TaskState for Failed {
 ///
 ///
 /// # Invariants
-/// - `id` and 'name' never change across transitions.
+/// - `id` and `name` never change across transitions.
 /// - Only `Pending -> Running -> {Completed | Failed}` is expressible.
 /// - A `Task<Completed<R>>` always holds an `R`. A `Task<Failed>` always holds an error message.
 ///
@@ -94,8 +94,8 @@ impl<S: TaskState> Task<S> {
         &self.name
     }
 
-    /// Private helper: change state while keeping 'id' and 'name'.
-    /// Not 'pub', so callers can only use the explicite transitions below.
+    /// Private helper: change state while keeping `id` and `name`.
+    /// Not `pub`, so callers can only use the explicite transitions below.
     fn with_state<Next: TaskState>(self, state: Next) -> Task<Next> {
         Task {
             id: self.id,
@@ -105,9 +105,9 @@ impl<S: TaskState> Task<S> {
     }
 }
 
-// --- Only for 'Pending' ---
+// --- Only for `Pending` ---
 impl Task<Pending> {
-    /// Creates a new pending task with a fresh ['TaskId'].
+    /// Creates a new pending task with a fresh [`TaskId`].
     pub fn new(name: impl Into<String>) -> Self {
         Self {
             id: TaskId::next(),
@@ -122,9 +122,9 @@ impl Task<Pending> {
     }
 }
 
-// --- Only for 'Running' ---
+// --- Only for `Running` ---
 impl Task<Running> {
-    /// Finish the task successfully with 'value'.
+    /// Finish the task successfully with `value`.
     pub fn complete<R>(self, value: R) -> Task<Completed<R>> {
         self.with_state(Completed(value))
     }
@@ -135,33 +135,33 @@ impl Task<Running> {
     }
 }
 
-// --- Only for 'Completed' ---
+// --- Only for `Completed` ---
 impl<R> Task<Completed<R>> {
     /// The value produced by the task.
     pub fn value(&self) -> &R {
         &self.state.0
     }
 
-    /// Consume the task and return '(id, name, value)'.
+    /// Consume the task and return `(id, name, value)`.
     pub fn into_parts(self) -> (TaskId, String, R) {
         (self.id, self.name, self.state.0)
     }
 }
 
-// --- Only for 'Failed' ---
+// --- Only for `Failed` ---
 impl Task<Failed> {
     /// The error message of the failed task.
     pub fn error(&self) -> &str {
         &self.state.0
     }
 
-    /// Consume the task and return '(id, name, error)'.
+    /// Consume the task and return `(id, name, error)`.
     pub fn into_parts(self) -> (TaskId, String, String) {
         (self.id, self.name, self.state.0)
     }
 }
 
-// Does not require 'S: Debug', so the carried value is never printed.
+// Does not require `S: Debug`, so the carried value is never printed.
 impl<S: TaskState> fmt::Debug for Task<S> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Task")
