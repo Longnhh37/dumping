@@ -15,7 +15,7 @@ use crate::work::WorkItem;
 /// # Invariant
 /// Fields are private and the only constructors are the 'From' impls below,
 /// so a 'TaskResult' can only be built from a task that actually finished
-/// ('Task<Completed<R>>' or 'Task<Failed>').
+/// (`Task<Completed<R>>` or `Task<Failed>`).
 #[derive(Debug)]
 pub struct TaskResult<R> {
     id: TaskId,
@@ -90,7 +90,7 @@ impl<R> From<Task<Failed>> for TaskResult<R> {
 /// all queued tasks to finish (results are discarded).
 ///
 /// ```
-/// use crate::{Scheduler, WorkItem};
+/// use task_scheduler::{Scheduler, WorkItem};
 ///
 /// let scheduler = Scheduler::<u32>::new(2);
 /// scheduler.submit(WorkItem::new("answer", || Ok(42))).unwrap();

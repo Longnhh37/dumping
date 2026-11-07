@@ -66,7 +66,7 @@ impl TaskState for Failed {
 /// # Invariants
 /// - `id` and 'name' never change across transitions.
 /// - Only `Pending -> Running -> {Completed | Failed}` is expressible.
-/// - A 'Task<Completed<R>>' always holds an 'R'. A 'Task<Failed>' always holds an error message.
+/// - A `Task<Completed<R>>` always holds an `R`. A `Task<Failed>` always holds an error message.
 ///
 /// Invalid transitions fail to compile:
 ///
