@@ -1,137 +1,168 @@
-//! Type-safe task lifecycle using typestate pattern
+//! Type-safe task lifecycle using typestate pattern.
 //!
-//! A ['Task'] carries its lifecycle state in its *type*. Transitions consume 'self' and return
-//! a new type, so invalid transitions do not compile
+//! The lifecycle state is part of the *type*, and the terminal states carry the task's outcome:
 //!
 //! ```text
-//! Pending --start()--> Running --complete()--> Completed
-//!                         |
-//!                         + -----fail()------> Failed
+//! Pending<Pending> --start()--> Task<Running> --complete(value)--> Task<Completed<R>>
+//!                                 |
+//!                                 + ------------fail(error)------> Task<Failed>
 //! ```
+//!
+//! Because 'complete' needs a value and 'fail' needs an error, a finished task
+//! cannot exist without its outcome.
 
 use std::fmt;
-use std::marker::PhantomData;
 
 use crate::id::TaskId;
 
 mod sealed {
-    /// Prevents downstream crates from implementing 'TaskState'
+    /// Prevents downstream crates from implementing 'TaskState'.
     pub trait Sealed {}
 }
 
-/// Marker trait implemeted only by the four lifecycle states
+/// Implemented only by the four lifecycle states.
 pub trait TaskState: sealed::Sealed {
+    /// Human-readable lable used by 'Debug'.
     const LABEL: &'static str;
 }
 
-// Uninhabited enums: zero-sized types
-
-/// Task is submitted but not yet picked up by a worker.
+/// Submitted but not yet picked up by a worker.
 #[derive(Debug)]
-pub enum Pending {}
+pub struct Pending;
+
 /// A worker is executing the task.
 #[derive(Debug)]
-pub enum Running {}
-/// The task finished successfully.
-#[derive(Debug)]
-pub enum Completed {}
-/// The task finished with an error.
-#[derive(Debug)]
-pub enum Failed {}
+pub struct Running;
 
-macro_rules! impl_state {
-    ($($state:ident),+ $(,)?) => {
-        $(
-            impl sealed::Sealed for $state {}
-            impl TaskState for $state {
-                const LABEL: &'static str = stringify!($state);
-            }
-        )+
-    };
+/// Finished successfully and carries the produced values.
+#[derive(Debug)]
+pub struct Completed<R>(R);
+
+/// Finished with an error and carries the error message.
+#[derive(Debug)]
+pub struct Failed(String);
+
+impl sealed::Sealed for Pending {}
+impl sealed::Sealed for Running {}
+impl<R> sealed::Sealed for Completed<R> {}
+impl sealed::Sealed for Failed {}
+
+impl TaskState for Pending {
+    const LABEL: &'static str = "Pending";
 }
-impl_state!(Pending, Running, Completed, Failed);
+impl TaskState for Running {
+    const LABEL: &'static str = "Running";
+}
+impl<R> TaskState for Completed<R> {
+    const LABEL: &'static str = "Completed";
+}
+impl TaskState for Failed {
+    const LABEL: &'static str = "Failed";
+}
 
-/// A task whose lifecycle state `S` is tracked at compile time
+/// A task whose lifecycle state `S` is tracked at compile time.
 ///
-/// `R` is the result type the task will eventually produce
 ///
 /// # Invariants
-/// - `id` never changes across transitions.
-/// - Only `Pending -> Running -> {Completed | Failed}` is expressible
+/// - `id` and 'name' never change across transitions.
+/// - Only `Pending -> Running -> {Completed | Failed}` is expressible.
+/// - A 'Task<Completed<R>>' always holds an 'R'. A 'Task<Failed>' always holds an error message.
 ///
 /// Invalid transitions fail to compile:
 ///
 /// ```compile_fail
-/// use crate::task::{Pending, Task};
+/// use crate::task::Task;
 ///
-/// let done = Task::<Pending, ()>::new("demo").start().complete();
-/// done.start(); // error: no method `start` on `Task<Completed, ()>`
+/// let done = Task::new("demo").start().complete(1u32);
+/// done.start(); // error: no method `start` on `Task<Completed<u32>>`
 /// ```
-pub struct Task<S: TaskState, R> {
+pub struct Task<S: TaskState> {
     id: TaskId,
     name: String,
-    _state: PhantomData<S>,
-    // 'fn() -> R' keeps auto traits (Send/Sync) and variance independent of 'R':
-    // a Task does not actually own an 'R', it only names its type
-    _result: PhantomData<fn() -> R>,
+    state: S,
 }
 
 // --- Available in every state ---
-impl<S: TaskState, R> Task<S, R> {
-    /// task's unique ID
+impl<S: TaskState> Task<S> {
+    /// The task's unique ID.
     pub fn id(&self) -> TaskId {
         self.id
     }
 
-    /// task's name
+    /// The task's name.
     pub fn name(&self) -> &str {
         &self.name
     }
 
-    /// private helper: change state while keeping 'id' and 'name'
-    /// not 'pub', so callers can only use the explicite transitions below
-    fn transition<Next: TaskState>(self) -> Task<Next, R> {
+    /// Private helper: change state while keeping 'id' and 'name'.
+    /// Not 'pub', so callers can only use the explicite transitions below.
+    fn with_state<Next: TaskState>(self, state: Next) -> Task<Next> {
         Task {
             id: self.id,
             name: self.name,
-            _state: PhantomData,
-            _result: PhantomData,
+            state,
         }
     }
 }
 
 // --- Only for 'Pending' ---
-impl<R> Task<Pending, R> {
-    /// creates a new pending task with a fresh ['TaskId']
+impl Task<Pending> {
+    /// Creates a new pending task with a fresh ['TaskId'].
     pub fn new(name: impl Into<String>) -> Self {
         Self {
             id: TaskId::next(),
             name: name.into(),
-            _state: PhantomData,
-            _result: PhantomData,
+            state: Pending,
         }
     }
 
-    /// A worker picks up the task
-    pub fn start(self) -> Task<Running, R> {
-        self.transition()
+    /// A worker picks up the task.
+    pub fn start(self) -> Task<Running> {
+        self.with_state(Running)
     }
 }
 
 // --- Only for 'Running' ---
-impl<R> Task<Running, R> {
-    /// task succeeded
-    pub fn complete(self) -> Task<Completed, R> {
-        self.transition()
+impl Task<Running> {
+    /// Finish the task successfully with 'value'.
+    pub fn complete<R>(self, value: R) -> Task<Completed<R>> {
+        self.with_state(Completed(value))
     }
 
-    /// task returns an error
-    pub fn fail(self) -> Task<Failed, R> {
-        self.transition()
+    /// Finish the task with an error.
+    pub fn fail(self, error: impl Into<String>) -> Task<Failed> {
+        self.with_state(Failed(error.into()))
     }
 }
 
-impl<S: TaskState, R> fmt::Debug for Task<S, R> {
+// --- Only for 'Completed' ---
+impl<R> Task<Completed<R>> {
+    /// The value produced by the task.
+    pub fn value(&self) -> &R {
+        &self.state.0
+    }
+
+    /// Consume the task and return '(id, name, value)'.
+    pub fn into_parts(self) -> (TaskId, String, R) {
+        (self.id, self.name, self.state.0)
+    }
+}
+
+// --- Only for 'Failed' ---
+impl Task<Failed> {
+    /// The error message of the failed task.
+    pub fn error(&self) -> &str {
+        &self.state.0
+    }
+
+    /// Consume the task and return '(id, name, error)'.
+    pub fn into_parts(self) -> (TaskId, String, String) {
+        (self.id, self.name, self.state.0)
+    }
+}
+
+// Does not require 'S: Debug', so the carried value is never printed.
+impl<S: TaskState> fmt::Debug for Task<S> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Task")
             .field("id", &self.id)
@@ -147,38 +178,41 @@ mod tests {
     use std::mem::size_of;
 
     #[test]
-    fn happy_path_keeps_id_and_name() {
-        let t = Task::<Pending, u32>::new("job");
-        let id = t.id();
+    fn completed_task_carries_its_value() {
+        let task = Task::new("job");
+        let id = task.id();
 
-        let done = t.start().complete();
-        assert_eq!(done.id(), id);
-        assert_eq!(done.name(), "job");
+        let done = task.start().complete(7u32);
+        assert_eq!(done.value(), &7);
+
+        let (done_id, name, value) = done.into_parts();
+        assert_eq!(done_id, id);
+        assert_eq!(name, "job");
+        assert_eq!(value, 7);
     }
 
     #[test]
-    fn failure_path() {
-        let failed = Task::<Pending, ()>::new("bad").start().fail();
-        assert!(format!("{failed:?}").contains("Failed"))
+    fn failed_task_carries_its_error() {
+        let failed = Task::new("bad").start().fail("boom");
+        assert_eq!(failed.error(), "boom");
+        assert!(format!("{failed:?}").contains("Failed"));
+
+        let (_, name, error) = failed.into_parts();
+        assert_eq!(name, "bad");
+        assert_eq!(error, "boom");
     }
 
     #[test]
-    fn state_markers_are_zero_cost() {
-        assert_eq!(
-            size_of::<Task<Pending, String>>(),
-            size_of::<Task<Running, String>>()
-        );
-        assert_eq!(
-            size_of::<Task<Pending, String>>(),
-            size_of::<Task<Completed, ()>>()
-        );
+    fn pending_and_running_markers_are_zero_cost() {
         assert_eq!(size_of::<Pending>(), 0);
+        assert_eq!(size_of::<Running>(), 0);
+        assert_eq!(size_of::<Task<Pending>>(), size_of::<Task<Running>>());
     }
 
     #[test]
-    fn task_is_send_even_if_result_type_is_not() {
+    fn finished_tasks_are_send() {
         fn assert_send<T: Send>() {}
-        // Rc<()> is !Send, but Task<_, Rc<()>> stays Send thanks to PhantomData<fn() -> R>
-        assert_send::<Task<Pending, std::rc::Rc<()>>>();
+        assert_send::<Task<Completed<String>>>();
+        assert_send::<Task<Failed>>();
     }
 }
