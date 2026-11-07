@@ -102,7 +102,7 @@ task-scheduler/
                      ▼
               ┌──────────────┐
               │ scheduler.rs │
-              │ Scheduler<R>│
+              │ Scheduler<R> │
               └──────────────┘
 ```
 
@@ -139,7 +139,7 @@ Transitions consume `self`, so the old state cannot be reused after a transition
                                                     └─ build TaskResult
        ▲                                            │
        │                 Result channel             │
-       └──── collect ◀── send(TaskResult) ◀────────┘
+       └──── collect ◀── send(TaskResult) ◀─────────┘
 
   shutdown(): close work channel → join workers → collect and sort results
 ```
