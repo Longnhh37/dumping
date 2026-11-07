@@ -6,7 +6,7 @@ fn main() {
         if true {
             panic!("something broke");
         }
-        42
+        32
     });
 
     match result {
