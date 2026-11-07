@@ -84,17 +84,26 @@ task-scheduler/
 ### Module dependencies
 
 ```
-id.rs          TaskId
-  ▲   ▲
-  │   └────────────── error.rs   (SchedulerError::TaskFailed holds a TaskId)
-  │
-task.rs        Task<S> + state types
-  ▲
-  │
-work.rs        WorkItem<R> = Task<Pending> + Job<R>
-  ▲
-  │
-scheduler.rs   Scheduler<R>, TaskResult<R>, worker_loop, run()
+             ┌───────────┐
+             │   id.rs   │  TaskId
+             └─────┬─────┘
+           ┌───────┴────────┐
+           ▼                ▼
+    ┌────────────┐    ┌────────────┐
+    │  task.rs   │    │  error.rs  │  SchedulerError
+    │  Task<S>   │    └──────┬─────┘
+    └─────┬──────┘           │
+          ▼                  │
+    ┌────────────┐           │
+    │  work.rs   │           │
+    │ WorkItem<R>│           │
+    └─────┬──────┘           │
+          └──────────┬───────┘
+                     ▼
+              ┌──────────────┐
+              │ scheduler.rs │
+              │ Scheduler<R>│
+              └──────────────┘
 ```
 
 Each layer only knows about the layers below it.
@@ -119,23 +128,20 @@ Transitions consume `self`, so the old state cannot be reused after a transition
 ### Data flow
 
 ```
- caller thread                        channel                 worker thread
- ─────────────                        ───────                 ─────────────
- WorkItem::new(name, closure)
- scheduler.submit(item) ─── send(WorkItem) ───▶ recv()  (worker_loop)
-                                                  │
-                                            run(item):
-                                              Task<Pending> ─start()─▶ Task<Running>
-                                              job() inside catch_unwind
-                                                Ok(v)  → complete(v) → Task<Completed<R>>
-                                                Err(e) → fail(e)     → Task<Failed>
-                                              TaskResult::from(finished_task)
-                                                  │
- scheduler.shutdown()                             │
-   drop sender → workers exit                     │
-   join workers                                   │
-   collect results ◀── send(TaskResult) ──────────┘
-   sort by TaskId
+  Caller thread            Work channel           Worker threads
+  ──────────────            ────────────           ──────────────
+  WorkItem::new(...)
+  submit(item) ───────────▶ recv() ──────────────▶ run(item)
+                                                    │
+                                                    ├─ start task
+                                                    ├─ run job under catch_unwind
+                                                    ├─ complete(value) or fail(error)
+                                                    └─ build TaskResult
+       ▲                                            │
+       │                 Result channel             │
+       └──── collect ◀── send(TaskResult) ◀────────┘
+
+  shutdown(): close work channel → join workers → collect and sort results
 ```
 
 There are two channels: a **work channel** (caller → workers, carries `WorkItem`)
