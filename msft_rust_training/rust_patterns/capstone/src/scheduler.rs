@@ -161,9 +161,9 @@ impl<R: Send + 'static> Scheduler<R> {
         self.join_workers();
 
         // All workers have exited, so every result is already buffered.
-        let mut resutls: Vec<_> = self.results.try_iter().collect();
-        resutls.sort_by_key(|r| r.id());
-        resutls
+        let mut results: Vec<_> = self.results.try_iter().collect();
+        results.sort_by_key(|r| r.id());
+        results
     }
 
     /// Idempotent: safe to call from both `shutdown` or `Drop`.

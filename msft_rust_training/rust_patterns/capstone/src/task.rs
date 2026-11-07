@@ -22,7 +22,7 @@ mod sealed {
 
 /// Implemented only by the four lifecycle states.
 pub trait TaskState: sealed::Sealed {
-    /// Human-readable lable used by `Debug`.
+    /// Human-readable label used by `Debug`.
     const LABEL: &'static str;
 }
 
@@ -95,7 +95,7 @@ impl<S: TaskState> Task<S> {
     }
 
     /// Private helper: change state while keeping `id` and `name`.
-    /// Not `pub`, so callers can only use the explicite transitions below.
+    /// Not `pub`, so callers can only use the explicit transitions below.
     fn with_state<Next: TaskState>(self, state: Next) -> Task<Next> {
         Task {
             id: self.id,
