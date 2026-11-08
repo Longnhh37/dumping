@@ -1,0 +1,14 @@
+[package]
+name = "logscope"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[features]
+default = []
+json = ["logscope-core/json", "dep:serde_json"]
+
+[dependencies]
+clap = { workspace = true }
+logscope-core = { path = "../logscope-core" }
+serde_json = { workspace = true, optional = true }

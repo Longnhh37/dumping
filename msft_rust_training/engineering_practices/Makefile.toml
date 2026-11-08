@@ -1,0 +1,37 @@
+[config]
+default_to_workspace = false
+
+[tasks.check]
+command = "cargo"
+args = ["check", "--workspace", "--all-targets", "--all-features"]
+
+[tasks.test]
+command = "cargo"
+args = ["test", "--workspace", "--all-features"]
+
+[tasks.clippy]
+command = "cargo"
+args = ["clippy", "--workspace", "--all-targets", "--all-features", "--", "-D", "warnings"]
+
+[tasks.fmt]
+command = "cargo"
+args = ["fmt", "--all", "--", "--check"]
+
+[tasks.dev]
+dependencies = ["fmt", "check", "clippy", "test"]
+
+[tasks.bench]
+command = "cargo"
+args = ["bench", "-p", "logscope-core"]
+
+[tasks.coverage]
+command = "cargo"
+args = ["llvm-cov", "--workspace", "--all-features", "--html"]
+
+[tasks.audit]
+command = "cargo"
+args = ["audit"]
+
+[tasks.deny]
+command = "cargo"
+args = ["deny", "check"]
