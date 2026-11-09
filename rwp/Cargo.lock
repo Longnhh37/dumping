@@ -1623,17 +1623,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "to-do-actix-server"
-version = "0.1.0"
-dependencies = [
- "actix-web",
- "dotenvy",
- "glue",
- "to-do-core",
- "tokio",
-]
-
-[[package]]
 name = "to-do-axum-server"
 version = "0.1.0"
 dependencies = [
