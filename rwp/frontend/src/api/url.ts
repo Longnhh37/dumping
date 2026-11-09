@@ -19,7 +19,7 @@ export class Url {
     return `${origin}/`;
   }
 
-  deleteUrl(name: string): string {
-    return `${this.baseUrl}api/v1/delete/${name}`;
+  deleteUrl(id: number): string {
+    return `${this.baseUrl}api/v1/delete/${id}`;
   }
 }

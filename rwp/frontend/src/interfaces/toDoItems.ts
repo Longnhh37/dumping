@@ -3,6 +3,7 @@ export enum TaskStatus {
   DONE = 'DONE'
 }
 export interface ToDoItem {
+  id: number;
   title: string;
   status: TaskStatus;
 }
