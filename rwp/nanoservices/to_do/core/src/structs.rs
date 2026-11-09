@@ -11,7 +11,20 @@ pub struct AllTodoItems {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TodoItem {
+    pub id: u64,
     pub title: String,
+    pub status: TaskStatus,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct NewTodoItem {
+    pub title: String,
+    pub status: TaskStatus,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct UpdateTodoItem {
+    pub id: u64,
     pub status: TaskStatus,
 }
 

@@ -1,16 +1,15 @@
-use crate::structs::TodoItem;
+use crate::structs::{TodoItem, UpdateTodoItem};
 use glue::errors::{NanoServiceError, NanoServiceErrorStatus};
 use to_do_dal::json_file::{get_all as get_all_handle, save_all};
 
-pub async fn update(item: TodoItem) -> Result<(), NanoServiceError> {
+pub async fn update(update: UpdateTodoItem) -> Result<(), NanoServiceError> {
     let mut all_items = get_all_handle::<TodoItem>()?;
-    if !all_items.contains_key(&item.title) {
-        return Err(NanoServiceError::new(
-            format!("Item with name {} not found", item.title),
-            NanoServiceErrorStatus::NotFound,
-        ));
-    }
-    all_items.insert(item.title.clone(), item);
+    let key = update.id.to_string();
+    let item = all_items.get_mut(&key).ok_or_else(|| NanoServiceError::new(
+        format!("Item with id {} not found", update.id),
+        NanoServiceErrorStatus::NotFound,
+    ))?;
+    item.status = update.status;
     save_all(&all_items)?;
     Ok(())
 }

@@ -14,7 +14,7 @@ export class Url {
   static getBaseUrl(): string {
     const { origin } = window.location;
     if (origin.includes("localhost:3000")) {
-      return "http://0.0.0.0:8001/";
+      return "http://localhost:8001/";
     }
     return `${origin}/`;
   }

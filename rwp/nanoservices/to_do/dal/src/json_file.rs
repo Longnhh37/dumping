@@ -17,6 +17,21 @@ fn store_path() -> PathBuf {
         .into()
 }
 
+pub fn allocate_id(max_existing_id: u64) -> Result<u64> {
+    let mut counter_path = store_path();
+    counter_path.set_extension("counter");
+    let stored_counter = std::fs::read_to_string(&counter_path)
+        .ok()
+        .and_then(|value| value.trim().parse::<u64>().ok())
+        .unwrap_or(0);
+    let id = stored_counter.max(max_existing_id).checked_add(1).ok_or_else(|| {
+        NanoServiceError::new("Todo item ID counter overflow", NanoServiceErrorStatus::Unknown)
+    })?;
+    std::fs::write(counter_path, id.to_string())
+        .eject_ctx(NanoServiceErrorStatus::Unknown, "Error writing ID counter")?;
+    Ok(id)
+}
+
 fn read_handle(path: &PathBuf) -> Result<Option<File>> {
     if !path.exists() {
         return Ok(None);

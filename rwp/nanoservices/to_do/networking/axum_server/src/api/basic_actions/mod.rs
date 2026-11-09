@@ -11,11 +11,11 @@ use axum::{
 pub fn router() -> Router {
     let get_routes = Router::new()
         .route("/all", get(get::get_all))
-        .route("/{name}", get(get::get_by_name));
+        .route("/{id}", get(get::get_by_name));
 
     let api_v1 = Router::new()
         .nest("/get", get_routes)
-        .route("/delete/{name}", delete(delete::delete_by_name))
+        .route("/delete/{id}", delete(delete::delete_by_id))
         .route("/create", post(create::create))
         .route("/update", patch(update::update));
 
