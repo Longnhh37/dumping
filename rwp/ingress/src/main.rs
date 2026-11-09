@@ -34,10 +34,16 @@ fn serve_asset(path: &str) -> Response {
 
     let mime = mime_guess::from_path(file).first_or_octet_stream();
 
+    let cache_control = if cfg!(debug_assertions) {
+        "no-cache"
+    } else {
+        "public, max-age=604800"
+    };
+
     (
         [
             (header::CONTENT_TYPE, mime.as_ref().to_owned()),
-            (header::CACHE_CONTROL, "public, max-age=604800".to_owned()),
+            (header::CACHE_CONTROL, cache_control.to_owned()),
         ],
         content.data,
     )

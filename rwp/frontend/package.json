@@ -2,8 +2,9 @@
   "name": "es_react",
   "version": "1.0.0",
   "scripts": {
-    "build": "node esbuild.js",
-    "serve": "serve public"
+    "build": "bun esbuild.js",
+    "typecheck": "tsc --noEmit",
+    "serve": "bunx --bun serve public"
   },
   "dependencies": {
     "axios": "^1.20.0",

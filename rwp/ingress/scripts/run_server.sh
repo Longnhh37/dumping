@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
-cd $SCRIPTPATH
+ROOT="$(cd "$(dirname "$0")/../.." && pwd -P)"
 
-cd ../..
-cd frontend
-npm install
-npm run build
-cd ../ingress
-cargo clean
-cargo run
+cd "$ROOT/frontend"
+bun install
+bun run build
+
+cd "$ROOT"
+cargo run -p ingress
