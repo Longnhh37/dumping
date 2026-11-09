@@ -1,4 +1,6 @@
 import ReactDOM from "react-dom/client";
+import "./App.css";
+import { CreateToDoItem } from "./components/CreateItemForm";
 import { useEffect, useState } from "react";
 import getAll from "./api/get";
 import type { ToDoItem, ToDoItems } from "./interfaces/toDoItems";
@@ -20,6 +22,18 @@ const App = () => {
   const [data, setData] = useState<ToDoItems | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  function reRenderItems(response: any) {
+    if (response.error) {
+      alert(JSON.stringify(response));
+      return;
+    } else if (response.data) {
+      setData(response.data);
+      setError(null);
+    } else {
+      setError("Unknown error");
+    }
+  }
+
   useEffect(() => {
     const fetchData = async () => {
       const response = await getAll();
@@ -37,8 +51,14 @@ const App = () => {
 
   return (
     <div>
-      <TaskList title="Pending" items={data.pending} />
-      <TaskList title="Done" items={data.done} />
+      {error ? (
+        <div style={{ color: "red" }}>Error: {error}</div>
+      ) : data ? (
+        <div>Data loaded: {JSON.stringify(data)}</div>
+      ) : (
+        <div>Loading...</div>
+      )}
+      <CreateToDoItem passBackResponse={reRenderItems} />
     </div>
   );
 };
