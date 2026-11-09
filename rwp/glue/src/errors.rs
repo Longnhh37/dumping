@@ -78,34 +78,7 @@ impl<T, E: std::fmt::Display> ResultExt<T> for Result<T, E> {
     }
 }
 
-#[macro_export]
-macro_rules! safe_eject {
-    ($e:expr, $status:expr) => {
-        $e.map_err(|x| $crate::NanoServiceError::new(x.to_string(), $status))
-    };
-    ($e:expr, $status:expr, $ctx:expr) => {
-        $e.map_err(|x| $crate::NanoServiceError::new(format!("{}: {x}", $ctx), $status))
-    };
-}
-
 // ──────────────────── Framework integrations ────────────────────
-
-#[cfg(feature = "actix")]
-mod actix_impl {
-    use super::NanoServiceError;
-    use actix_web::{HttpResponse, error::ResponseError, http::StatusCode};
-
-    impl ResponseError for NanoServiceError {
-        fn status_code(&self) -> StatusCode {
-            StatusCode::from_u16(self.status.http_status_code())
-                .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR)
-        }
-
-        fn error_response(&self) -> HttpResponse {
-            HttpResponse::build(self.status_code()).json(self.to_string())
-        }
-    }
-}
 
 #[cfg(feature = "axum")]
 mod axum_impl {

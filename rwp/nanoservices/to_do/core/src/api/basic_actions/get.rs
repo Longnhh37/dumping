@@ -7,8 +7,10 @@ pub async fn get_all() -> Result<AllTodoItems, NanoServiceError> {
 }
 
 pub async fn get_by_name(name: &str) -> Result<TodoItem, NanoServiceError> {
-    get_all_handle()?.remove(name).ok_or(NanoServiceError::new(
-        format!("Item with name '{}' not found", name),
-        NanoServiceErrorStatus::NotFound,
-    ))
+    get_all_handle()?.remove(name).ok_or_else(|| {
+        NanoServiceError::new(
+            format!("Item with name '{}' not found", name),
+            NanoServiceErrorStatus::NotFound,
+        )
+    })
 }

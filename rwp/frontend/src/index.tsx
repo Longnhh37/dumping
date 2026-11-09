@@ -1,37 +1,23 @@
 import ReactDOM from "react-dom/client";
-import "./App.css";
-import { CreateToDoItem } from "./components/CreateItemForm";
 import { useEffect, useState } from "react";
+import "./App.css";
 import getAll from "./api/get";
-import type { ToDoItem, ToDoItems } from "./interfaces/toDoItems";
-
-const TaskList = ({ title, items }: { title: string; items: ToDoItem[] }) => (
-  <section>
-    <h2>
-      {title} ({items.length})
-    </h2>
-    <ul>
-      {items.map((item) => (
-        <li key={item.title}>{item.title}</li>
-      ))}
-    </ul>
-  </section>
-);
+import type { ApiResult } from "./api/utils";
+import { CreateToDoItem } from "./components/CreateItemForm";
+import { ToDoItem } from "./components/ToDoItem";
+import type { ToDoItems } from "./interfaces/toDoItems";
 
 const App = () => {
   const [data, setData] = useState<ToDoItems | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  function reRenderItems(response: any) {
-    if (response.error) {
+  function reRenderItems(response: ApiResult<ToDoItems>) {
+    if ("error" in response) {
       alert(JSON.stringify(response));
       return;
-    } else if (response.data) {
-      setData(response.data);
-      setError(null);
-    } else {
-      setError("Unknown error");
     }
+    setData(response.data);
+    setError(null);
   }
 
   useEffect(() => {
@@ -50,15 +36,35 @@ const App = () => {
   if (!data) return <div>Loading...</div>;
 
   return (
-    <div>
-      {error ? (
-        <div style={{ color: "red" }}>Error: {error}</div>
-      ) : data ? (
-        <div>Data loaded: {JSON.stringify(data)}</div>
-      ) : (
-        <div>Loading...</div>
-      )}
-      <CreateToDoItem passBackResponse={reRenderItems} />
+    <div className="App">
+      <div className="mainContainer">
+        <div className="header">
+          <p>complete tasks: {data.done.length}</p>
+          <p>pending tasks: {data.pending.length}</p>
+        </div>
+
+        <h1>Pending Items</h1>
+        {data.pending.map((item) => (
+          <ToDoItem
+            key={item.title + item.status}
+            title={item.title}
+            status={item.status}
+            passBackResponse={reRenderItems}
+          />
+        ))}
+
+        <h1>Done Items</h1>
+        {data.done.map((item) => (
+          <ToDoItem
+            key={item.title + item.status}
+            title={item.title}
+            status={item.status}
+            passBackResponse={reRenderItems}
+          />
+        ))}
+
+        <CreateToDoItem passBackResponse={reRenderItems} />
+      </div>
     </div>
   );
 };

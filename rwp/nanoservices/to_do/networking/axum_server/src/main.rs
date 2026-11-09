@@ -1,7 +1,7 @@
-mod api;
-
 use axum::Router;
 use tokio::net::TcpListener;
+
+use to_do_axum_server::api;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {

@@ -1,46 +1,70 @@
 #!/usr/bin/env zsh
 # File: scripts/basic_test.sh
+# Smoke test for the axum to-do server.
+# Requires: cargo, xh, jq.
+# WARNING: this resets ./tasks.json at the workspace root to "{}".
 
-# Navigate to workspace root (parent of scripts/)
-SCRIPTPATH="${0:A:h}"
-cd "$SCRIPTPATH/.."
+set -euo pipefail
 
-framework=${1:-axum}
+# Run everything from the workspace root (parent of scripts/)
+cd "${0:A:h}/.."
 
-case $framework in
-  actix)
-    echo "Building and running Actix server..."
-    cargo build -p to-do-actix-server && cargo run -p to-do-actix-server &
-    ;;
-  axum)
-    echo "Building and running Axum server..."
-    cargo build -p to-do-axum-server && cargo run -p to-do-axum-server &
-    ;;
-  hyper)
-    echo "Building and running Hyper server..."
-    cargo build -p to-do-hyper-server && cargo run -p to-do-hyper-server &
-    ;;
-  rocket)
-    echo "Building and running Rocket server..."
-    cargo build -p to-do-rocket-server && cargo run -p to-do-rocket-server &
-    ;;
-  *)
-    echo "Unknown framework: $framework"
-    echo "Usage: $0 [actix|axum|hyper|rocket]"
-    exit 1
-    ;;
-esac
+OUTPUT=basic_test_output.txt
+BIN="${CARGO_TARGET_DIR:-target}/debug/to-do-axum-server"
+BASE=":8080/api/v1"
 
-PID=$!
-sleep 1
+# Build synchronously first, so $! below is the PID of the server itself
+echo "Building axum server..."
+cargo build -p to-do-axum-server
 
+# Start from a clean state
 echo '{}' > tasks.json
-rm -f output.txt
+: > "$OUTPUT"
 
-xh POST :8080/api/v1/create title=writing status=PENDING | jq . >> basic_test_output.txt
-xh POST :8080/api/v1/create title=coding status=PENDING | jq . >> basic_test_output.txt
-xh --check-status DELETE :8080/api/v1/delete/coding | jq . >> basic_test_output.txt
+# Always stop the server, even when a step fails
+PID=""
+cleanup() {
+  [[ -n "$PID" ]] && kill "$PID" 2>/dev/null || true
+}
+trap cleanup EXIT
 
-kill $PID
+"$BIN" &
+PID=$!
+echo "Server started with PID: $PID"
 
-echo "exit 0"
+# Wait until the server answers instead of a blind sleep
+for _ in {1..30}; do
+  xh --ignore-stdin --check-status GET "$BASE/get/all" &>/dev/null && break
+  sleep 0.2
+done
+
+# Run one request, log its JSON body to $OUTPUT, fail on non-2xx
+step() {
+  local label=$1; shift
+  echo "$label"
+  echo "### $label" >> "$OUTPUT"
+  xh --ignore-stdin --check-status "$@" | jq . >> "$OUTPUT"
+}
+
+step "create writing" POST "$BASE/create" title=writing status=PENDING
+step "create coding"  POST "$BASE/create" title=coding  status=PENDING
+step "get all"        GET  "$BASE/get/all"
+step "get by name"    GET  "$BASE/get/writing"
+step "delete coding"  DELETE "$BASE/delete/coding"
+
+# update requires the `token` header (HeaderToken extractor)
+step "update writing" PATCH "$BASE/update" token:some-token title=writing status=DONE
+
+# update without a token must be rejected with 401
+echo "update without token (expect 401)"
+if xh --ignore-stdin --check-status PATCH "$BASE/update" title=writing status=DONE &>/dev/null; then
+  echo "FAIL: update without token was accepted" >&2
+  exit 1
+fi
+
+# Final state: "writing" is done, nothing is pending
+xh --ignore-stdin GET "$BASE/get/all" \
+  | jq -e '(.done | length == 1) and (.pending | length == 0)' >/dev/null \
+  || { echo "FAIL: unexpected final state" >&2; exit 1; }
+
+echo "OK, details in $OUTPUT"

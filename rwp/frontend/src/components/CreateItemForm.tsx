@@ -1,24 +1,28 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import type { ChangeEvent, FC } from "react";
 import { createToDoItemCall } from "../api/create";
+import type { ApiResult } from "../api/utils";
+import type { ToDoItems } from "../interfaces/toDoItems";
 
 interface CreateToDoItemProps {
-  passBackResponse: (response: any) => void;
+  passBackResponse: (response: ApiResult<ToDoItems>) => void;
 }
 
-export const CreateToDoItem: React.FC<CreateToDoItemProps> = ({
+export const CreateToDoItem: FC<CreateToDoItemProps> = ({
   passBackResponse,
 }) => {
   const [title, setTitle] = useState<string>("");
 
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTitleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value);
   };
 
   const createItem = async () => {
-    await createToDoItemCall(title).then((response) => {
-      setTitle("");
-      passBackResponse(response);
-    });
+    if (!title.trim()) return;
+
+    const response = await createToDoItemCall(title);
+    setTitle("");
+    passBackResponse(response);
   };
 
   return (

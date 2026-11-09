@@ -1,56 +1,36 @@
-import React, { useEffect, useState } from "react";
+import type { FC } from "react";
 import { updateToDoItemCall } from "../api/update";
 import { deleteToDoItemCall } from "../api/delete";
+import type { ApiResult } from "../api/utils";
 import { TaskStatus } from "../interfaces/toDoItems";
+import type { ToDoItems } from "../interfaces/toDoItems";
 
 interface ToDoItemProps {
   title: string;
-  status: string;
-  id: number;
-  passBackResponse: (response: any) => void;
+  status: TaskStatus;
+  passBackResponse: (response: ApiResult<ToDoItems>) => void;
 }
 
-export const ToDoItem: React.FC<ToDoItemProps> = ({
+export const ToDoItem: FC<ToDoItemProps> = ({
   title,
   status,
-  id,
   passBackResponse,
 }) => {
-  const [itemTitle, setTitle] = useState<string>(title);
-  const [button, setButton] = useState<string>("");
-
-  useEffect(() => {
-    const processStatus = (status: string): string => {
-      return status === "PENDING" ? "edit" : "delete";
-    };
-    setButton(processStatus(status));
-  }, [status]);
+  const isPending = status === TaskStatus.PENDING;
+  const buttonLabel = isPending ? "edit" : "delete";
 
   const sendRequest = async () => {
-    if (button === "edit") {
-      await updateToDoItemCall(itemTitle, TaskStatus.DONE).then((response) => {
-        if (response.data) {
-          passBackResponse(response.data);
-        } else if (response.error) {
-          console.log(response);
-        }
-      });
-    } else {
-      await deleteToDoItemCall(itemTitle).then((response) => {
-        if (response.data) {
-          passBackResponse(response.data);
-        } else if (response.error) {
-          console.log(response);
-        }
-      });
-    }
+    const response = isPending
+      ? await updateToDoItemCall(title, TaskStatus.DONE)
+      : await deleteToDoItemCall(title);
+    passBackResponse(response);
   };
 
   return (
-    <div className="itemContainer" id={id}>
-      <p>{itemTitle}</p>
+    <div className="itemContainer">
+      <p>{title}</p>
       <button className="actionButton" onClick={sendRequest}>
-        {button}
+        {buttonLabel}
       </button>
     </div>
   );

@@ -7,5 +7,5 @@ export async function createToDoItemCall(title: string) {
     title: title,
     status: TaskStatus.PENDING,
   };
-  return postCall<ToDoItems>(new Url().create, toDoItem, 200);
+  return postCall<ToDoItems>(new Url().create, toDoItem, 201);
 }
