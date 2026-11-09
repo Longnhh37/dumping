@@ -1,14 +1,10 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+use wasm_bindgen::prelude::*;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+#[wasm_bindgen]
+pub fn rust_generate_button_text(status: String) -> String {
+    match status.to_uppercase().as_str() {
+        "PENDING" => "edit".to_string(),
+        "DONE" => "delete".to_string(),
+        _ => "an error has occured".to_string(),
     }
 }
