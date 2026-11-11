@@ -7,13 +7,14 @@ use glue::errors::NanoServiceError;
 use {
     super::super::descriptors::JsonFileDescriptor,
     crate::json_file::{get_all, save_all},
+    glue::errors::NanoServiceErrorStatus,
     std::collections::HashMap,
 };
 
 #[cfg(feature = "sqlx-postgres")]
 use {
     super::super::descriptors::SqlxPostgresDescriptor,
-    crate::connections::sqlx_postgres::SQLX_POSTGRES_POOL, glue::errors::NanoServiceErrorStatus,
+    crate::connections::sqlx_postgres::SQLX_POSTGRES_POOL,
 };
 
 pub trait DeleteOne {
