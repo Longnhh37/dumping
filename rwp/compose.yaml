@@ -9,3 +9,8 @@ services:
       - "POSTGRES_USER=username"
       - "POSTGRES_DB=to_do"
       - "POSTGRES_PASSWORD=password"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U username -d to_do"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
