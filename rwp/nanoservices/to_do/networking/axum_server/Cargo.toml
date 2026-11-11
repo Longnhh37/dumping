@@ -9,3 +9,4 @@ axum = "0.8.9"
 dotenvy = "0.15.7"
 to-do-core = { path = "../../core" }
 glue = { path = "../../../../glue", features = ["axum"] }
+to-do-dal = { path = "../../dal/", features = ["sqlx-postgres"] }

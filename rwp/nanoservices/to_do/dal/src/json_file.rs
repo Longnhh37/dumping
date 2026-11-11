@@ -1,108 +1,104 @@
-use glue::errors::{NanoServiceError, NanoServiceErrorStatus};
-use glue::errors::ResultExt;
-use serde::{Serialize, de::DeserializeOwned};
 use std::{
     collections::HashMap,
-    env,
+    env, fs,
     fs::{File, OpenOptions},
-    io::{Read, Write},
+    io::Read,
     path::PathBuf,
 };
 
+use serde::{Serialize, de::DeserializeOwned};
+
+use glue::errors::{NanoServiceError, NanoServiceErrorStatus, ResultExt};
+
 type Result<T> = std::result::Result<T, NanoServiceError>;
 
-fn store_path() -> PathBuf {
-    env::var("JSON_STORE_PATH")
-        .unwrap_or_else(|_| "./tasks.json".to_string())
-        .into()
-}
-
-pub fn allocate_id(max_existing_id: u64) -> Result<u64> {
-    let mut counter_path = store_path();
-    counter_path.set_extension("counter");
-    let stored_counter = std::fs::read_to_string(&counter_path)
-        .ok()
-        .and_then(|value| value.trim().parse::<u64>().ok())
-        .unwrap_or(0);
-    let id = stored_counter.max(max_existing_id).checked_add(1).ok_or_else(|| {
-        NanoServiceError::new("Todo item ID counter overflow", NanoServiceErrorStatus::Unknown)
-    })?;
-    std::fs::write(counter_path, id.to_string())
-        .eject_ctx(NanoServiceErrorStatus::Unknown, "Error writing ID counter")?;
-    Ok(id)
-}
-
-fn read_handle(path: &PathBuf) -> Result<Option<File>> {
-    if !path.exists() {
-        return Ok(None);
+fn store_path(path: Option<&str>) -> PathBuf {
+    match path {
+        Some(p) => PathBuf::from(p),
+        None => env::var_os("JSON_STORE_PATH")
+            .map_or_else(|| PathBuf::from("./tasks.json"), PathBuf::from),
     }
-    File::open(path)
-        .map(Some)
-        .eject_ctx(NanoServiceErrorStatus::Unknown, "Error opening file for reading")
 }
 
-fn write_handle(path: &PathBuf) -> Result<File> {
+fn get_handle(path: Option<&str>) -> Result<File> {
     OpenOptions::new()
+        .read(true)
         .write(true)
         .create(true)
-        .truncate(true)
-        .open(path)
-        .eject_ctx(NanoServiceErrorStatus::Unknown, "Error opening JSON file for writing")
+        .truncate(false)
+        .open(store_path(path))
+        .eject_ctx(NanoServiceErrorStatus::Unknown, "Error opening JSON file")
 }
 
 pub fn get_all<T: DeserializeOwned>() -> Result<HashMap<String, T>> {
-    let Some(mut file) = read_handle(&store_path())? else {
-        return Ok(HashMap::new());
-    };
     let mut contents = String::new();
-    file.read_to_string(&mut contents)
-        .eject_ctx(
-            NanoServiceErrorStatus::Unknown,
-            "Error reading file to get all tasks",
-        )?;
-    if contents.trim().is_empty() {
-        return Ok(HashMap::new());
-    }
+    get_handle(None)?.read_to_string(&mut contents).eject_ctx(
+        NanoServiceErrorStatus::Unknown,
+        "Error reading JSON file to get all tasks",
+    )?;
     serde_json::from_str(&contents)
         .eject_ctx(NanoServiceErrorStatus::Unknown, "Error parsing JSON file")
 }
 
 pub fn save_all<T: Serialize>(tasks: &HashMap<String, T>) -> Result<()> {
-    let mut file = write_handle(&store_path())?;
     let json = serde_json::to_string_pretty(tasks).eject_ctx(
         NanoServiceErrorStatus::Unknown,
-        "Error serializing JSON to save all tasks",
+        "Error serializing JSON before saving tasks",
     )?;
-    file.write_all(json.as_bytes())
-        .eject_ctx(NanoServiceErrorStatus::Unknown, "Error writing file")
+    fs::write(store_path(None), json).eject_ctx(
+        NanoServiceErrorStatus::Unknown,
+        "Error writing tasks to JSON file",
+    )
 }
 
 pub fn get_one<T: DeserializeOwned>(id: &str) -> Result<T> {
-    get_all::<T>()?
-        .remove(id)
-        .ok_or_else(|| NanoServiceError::new(
-            format!("task '{}' not found", id),
-            NanoServiceErrorStatus::NotFound,
-        ))
+    get_all::<T>()?.remove(id).ok_or_else(|| {
+        NanoServiceError::new(
+            format!("Task with id {id} not found"),
+            NanoServiceErrorStatus::Unknown,
+        )
+    })
 }
 
 pub fn save_one<T>(id: &str, task: &T) -> Result<()>
 where
     T: Serialize + DeserializeOwned + Clone,
 {
-    let mut tasks = get_all::<T>()?;
-    tasks.insert(id.to_string(), task.clone());
+    let mut tasks = get_all::<T>().unwrap_or_default();
+    tasks.insert(id.to_owned(), task.clone());
     save_all(&tasks)
 }
 
 pub fn delete_one<T>(id: &str) -> Result<T>
 where
-    T: Serialize + DeserializeOwned + Clone + std::fmt::Debug,
+    T: Serialize + DeserializeOwned,
 {
     let mut tasks = get_all::<T>().unwrap_or_default();
-    let deleted_item = tasks.remove(id).ok_or_else(|| {
-        NanoServiceError::new(format!("task with title '{}' not found", id), NanoServiceErrorStatus::NotFound)
+    let deleted = tasks.remove(id).ok_or_else(|| {
+        NanoServiceError::new(
+            format!("Task with title {id} not found"),
+            NanoServiceErrorStatus::NotFound,
+        )
     })?;
     save_all(&tasks)?;
-    Ok(deleted_item)
+    Ok(deleted)
+}
+
+#[cfg(feature = "json-file")]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn get_handle_creates_missing_file() {
+        let path = "./non_existent_file.json";
+        assert!(get_handle(Some(path)).is_ok());
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn save_then_get_one() {
+        save_one("1", &"Task 1".to_string()).unwrap();
+        assert_eq!(get_one::<String>("1").unwrap(), "Task 1");
+    }
 }

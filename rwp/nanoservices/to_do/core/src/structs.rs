@@ -1,31 +1,29 @@
-use crate::enums::TaskStatus;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
+
+use serde::{Deserialize, Serialize};
+
+use crate::enums::TaskStatus;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TodoItem {
+    pub title: String,
+    pub status: TaskStatus,
+}
+
+impl fmt::Display for TodoItem {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.status {
+            TaskStatus::Pending => write!(f, "Pending: {}", self.title),
+            TaskStatus::Done => write!(f, "Done: {}", self.title),
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AllTodoItems {
     pub pending: Vec<TodoItem>,
     pub done: Vec<TodoItem>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TodoItem {
-    pub id: u64,
-    pub title: String,
-    pub status: TaskStatus,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct NewTodoItem {
-    pub title: String,
-    pub status: TaskStatus,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct UpdateTodoItem {
-    pub id: u64,
-    pub status: TaskStatus,
 }
 
 impl From<HashMap<String, TodoItem>> for AllTodoItems {
@@ -40,14 +38,5 @@ impl From<HashMap<String, TodoItem>> for AllTodoItems {
         }
 
         AllTodoItems { pending, done }
-    }
-}
-
-impl fmt::Display for TodoItem {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.status {
-            TaskStatus::Pending => write!(f, "Pending: {}", self.title),
-            TaskStatus::Done => write!(f, "Done: {}", self.title),
-        }
     }
 }

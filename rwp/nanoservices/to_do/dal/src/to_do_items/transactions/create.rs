@@ -66,7 +66,7 @@ async fn json_file_save_one(item: NewToDoItem) -> Result<ToDoItem, NanoServiceEr
         status: item.status.to_string(),
     };
     tasks.insert(to_do_item.title.to_string(), to_do_item.clone());
-    let _ = save_all(&tasks)?;
+    save_all(&tasks)?;
 
     Ok(to_do_item)
 }

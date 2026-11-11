@@ -810,7 +810,7 @@ dependencies = [
  "axum",
  "mime_guess",
  "rust-embed",
- "to-do-axum-server",
+ "to-do-dal",
  "tokio",
  "tower-http",
 ]
@@ -1526,6 +1526,7 @@ dependencies = [
  "dotenvy",
  "glue",
  "to-do-core",
+ "to-do-dal",
  "tokio",
 ]
 
