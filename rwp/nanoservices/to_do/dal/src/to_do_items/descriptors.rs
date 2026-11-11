@@ -1,2 +1,2 @@
-pub struct SqlxPostGresDescriptor;
+pub struct SqlxPostgresDescriptor;
 pub struct JsonFileDescriptor;
