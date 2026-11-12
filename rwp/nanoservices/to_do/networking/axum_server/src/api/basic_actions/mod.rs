@@ -10,9 +10,10 @@ use axum::{
 
 use to_do_dal::to_do_items::descriptors::SqlxPostgresDescriptor;
 
-pub fn router() -> Router {
-    let get_routes = Router::new().route("/all", get(get::get_all::<SqlxPostgresDescriptor>));
-    // .route("/{id}", get(get::get_by_name::<SqlxPostgresDescriptor>));
+pub fn basic_actions_router() -> Router {
+    let get_routes = Router::new()
+        .route("/all", get(get::get_all::<SqlxPostgresDescriptor>))
+        .route("/{name}", get(get::get_by_name::<SqlxPostgresDescriptor>));
 
     let api_v1 = Router::new()
         .nest("/get", get_routes)
