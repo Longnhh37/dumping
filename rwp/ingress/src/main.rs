@@ -14,7 +14,7 @@ const INDEX_HTML: &str = include_str!("../index.html");
 const NOT_FOUND: (StatusCode, &str) = (StatusCode::NOT_FOUND, "404 Not Found");
 
 #[derive(RustEmbed)]
-#[folder = "../../frontend/public"]
+#[folder = "../frontend/public"]
 struct FrontendAssets;
 
 async fn index() -> Html<&'static str> {
@@ -64,7 +64,7 @@ async fn catch_all(uri: Uri) -> Response {
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    run_migrations().await;
+    run_migrations().await.expect("Failed to run migrations");
 
     let cors = CorsLayer::new()
         .allow_origin(Any)
