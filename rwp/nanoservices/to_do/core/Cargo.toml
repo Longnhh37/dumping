@@ -13,6 +13,9 @@ serde = { version = "1", features = ["derive"] }
 to-do-dal = { path = "../dal" }
 glue = { path = "../../../glue" }
 
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt"] }
+
 [features]
 json-file-storage = ["to-do-dal/json-file"]
 default = ["json-file-storage"]

@@ -10,3 +10,7 @@ dotenvy = "0.15.7"
 to-do-core = { path = "../../core" }
 glue = { path = "../../../../glue", features = ["axum"] }
 to-do-dal = { path = "../../dal/", features = ["sqlx-postgres"] }
+
+[dev-dependencies]
+serde_json = "1"
+tower = { version = "0.5", features = ["util"] }

@@ -65,23 +65,82 @@ async fn catch_all(uri: Uri) -> Response {
     }
 }
 
+fn app() -> Router {
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
+
+    Router::new()
+        .route("/", get(index))
+        .merge(api::router())
+        .fallback(catch_all)
+        .layer(cors)
+}
+
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     run_todo_migrations()
         .await
         .expect("Failed to run migrations");
 
-    let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
-
-    let app = Router::new()
-        .route("/", get(index))
-        .merge(api::router())
-        .fallback(catch_all)
-        .layer(cors);
-
     let listener = tokio::net::TcpListener::bind((Ipv4Addr::UNSPECIFIED, 8001)).await?;
-    axum::serve(listener, app).await
+    axum::serve(listener, app()).await
+}
+
+#[cfg(test)]
+mod tests {
+    use axum::{
+        body::Body,
+        http::{Method, Request, StatusCode},
+    };
+    use tower::ServiceExt;
+
+    use super::app;
+
+    #[tokio::test]
+    async fn serves_the_frontend_shell_and_assets() {
+        let response = app()
+            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let response = app()
+            .oneshot(
+                Request::builder()
+                    .uri("/bundle.css")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn routes_api_requests_and_returns_404_for_unknown_api_paths() {
+        let invalid_json = app()
+            .oneshot(
+                Request::builder()
+                    .method(Method::POST)
+                    .uri("/api/v1/create")
+                    .header("content-type", "application/json")
+                    .body(Body::from("not-json"))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(invalid_json.status(), StatusCode::BAD_REQUEST);
+
+        let missing_route = app()
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/unknown")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(missing_route.status(), StatusCode::NOT_FOUND);
+    }
 }

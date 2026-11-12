@@ -35,3 +35,29 @@ impl TaskStatus {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::TaskStatus;
+    use glue::errors::NanoServiceErrorStatus;
+
+    #[test]
+    fn parses_status_case_insensitively_and_formats_canonical_values() {
+        assert!(matches!(
+            TaskStatus::from_string("done").unwrap(),
+            TaskStatus::DONE
+        ));
+        assert!(matches!(
+            TaskStatus::from_string("Pending").unwrap(),
+            TaskStatus::PENDING
+        ));
+        assert_eq!(TaskStatus::DONE.to_string(), "DONE");
+        assert_eq!(TaskStatus::PENDING.to_string(), "PENDING");
+    }
+
+    #[test]
+    fn rejects_unknown_status_as_bad_request() {
+        let error = TaskStatus::from_string("blocked").unwrap_err();
+        assert_eq!(error.status, NanoServiceErrorStatus::BadRequest);
+    }
+}

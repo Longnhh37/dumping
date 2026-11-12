@@ -3,5 +3,5 @@ pub mod basic_actions;
 use axum::Router;
 
 pub fn router() -> Router {
-    basic_actions::basic_actions_router()
+    basic_actions::router()
 }

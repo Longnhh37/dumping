@@ -813,6 +813,7 @@ dependencies = [
  "to-do-axum-server",
  "to-do-dal",
  "tokio",
+ "tower",
  "tower-http",
 ]
 
@@ -1529,9 +1530,11 @@ dependencies = [
  "axum",
  "dotenvy",
  "glue",
+ "serde_json",
  "to-do-core",
  "to-do-dal",
  "tokio",
+ "tower",
 ]
 
 [[package]]
@@ -1542,6 +1545,7 @@ dependencies = [
  "glue",
  "serde",
  "to-do-dal",
+ "tokio",
 ]
 
 [[package]]

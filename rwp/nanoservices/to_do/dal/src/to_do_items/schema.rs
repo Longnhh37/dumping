@@ -37,3 +37,40 @@ impl AllTodoItems {
         Ok(Self { pending, done })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{AllTodoItems, ToDoItem};
+    use glue::errors::NanoServiceErrorStatus;
+
+    #[test]
+    fn groups_items_by_status_without_losing_names() {
+        let all = AllTodoItems::from_vec(vec![
+            ToDoItem {
+                name: "write-tests".into(),
+                status: "PENDING".into(),
+            },
+            ToDoItem {
+                name: "wire-ingress".into(),
+                status: "DONE".into(),
+            },
+        ])
+        .unwrap();
+
+        assert_eq!(all.pending.len(), 1);
+        assert_eq!(all.pending[0].name, "write-tests");
+        assert_eq!(all.done.len(), 1);
+        assert_eq!(all.done[0].name, "wire-ingress");
+    }
+
+    #[test]
+    fn rejects_items_with_unknown_status() {
+        let error = AllTodoItems::from_vec(vec![ToDoItem {
+            name: "invalid".into(),
+            status: "BLOCKED".into(),
+        }])
+        .unwrap_err();
+
+        assert_eq!(error.status, NanoServiceErrorStatus::BadRequest);
+    }
+}

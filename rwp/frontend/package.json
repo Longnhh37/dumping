@@ -4,6 +4,7 @@
   "scripts": {
     "build": "bun esbuild.js",
     "typecheck": "tsc --noEmit",
+    "test": "bun test",
     "serve": "bunx --bun serve public",
     "wasm": "cd rust-interface && wasm-pack build --target web && cp pkg/rust_interface_bg.wasm ../public/rust_interface_bg.wasm",
     "wasm-trace": "wasm2wat public/rust_interface_bg.wasm -o public/rust_interface_bg.wat"

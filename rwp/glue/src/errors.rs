@@ -78,6 +78,29 @@ impl<T, E: std::fmt::Display> ResultExt<T> for Result<T, E> {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::{NanoServiceErrorStatus, ResultExt};
+
+    #[test]
+    fn maps_error_statuses_to_http_codes() {
+        assert_eq!(NanoServiceErrorStatus::BadRequest.http_status_code(), 400);
+        assert_eq!(NanoServiceErrorStatus::NotFound.http_status_code(), 404);
+        assert_eq!(NanoServiceErrorStatus::Unauthorized.http_status_code(), 401);
+        assert_eq!(NanoServiceErrorStatus::Unknown.http_status_code(), 500);
+    }
+
+    #[test]
+    fn result_extensions_preserve_context_and_status() {
+        let error = Err::<(), _>("storage offline")
+            .eject_ctx(NanoServiceErrorStatus::Unknown, "loading items")
+            .unwrap_err();
+
+        assert_eq!(error.message, "loading items: storage offline");
+        assert_eq!(error.status, NanoServiceErrorStatus::Unknown);
+    }
+}
+
 // ──────────────────── Framework integrations ────────────────────
 
 #[cfg(feature = "axum")]
