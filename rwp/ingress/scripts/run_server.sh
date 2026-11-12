@@ -8,4 +8,5 @@ bun install
 bun run build
 
 cd "$ROOT"
+export $(cat .env | xargs)
 cargo run -p ingress

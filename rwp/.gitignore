@@ -1,3 +1,4 @@
 bun
 tasks.json
 postgres-language-server.jsonc
+.env
