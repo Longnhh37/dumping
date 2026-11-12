@@ -7,7 +7,8 @@ use axum::{
     routing::get,
 };
 use rust_embed::RustEmbed;
-use to_do_dal::migrations::run_migrations;
+use to_do_dal::migrations::run_migrations as run_todo_migrations;
+use to_do_axum_server::api;
 use tower_http::cors::{Any, CorsLayer};
 
 const INDEX_HTML: &str = include_str!("../index.html");
@@ -64,7 +65,7 @@ async fn catch_all(uri: Uri) -> Response {
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    run_migrations().await.expect("Failed to run migrations");
+    run_todo_migrations().await.expect("Failed to run migrations");
 
     let cors = CorsLayer::new()
         .allow_origin(Any)
@@ -73,6 +74,7 @@ async fn main() -> std::io::Result<()> {
 
     let app = Router::new()
         .route("/", get(index))
+        .merge(api::router())
         .fallback(catch_all)
         .layer(cors);
 

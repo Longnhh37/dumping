@@ -17,28 +17,28 @@ use {
 };
 
 pub trait DeleteOne {
-    fn delete_one(title: String)
+    fn delete_one(name: String)
     -> impl Future<Output = Result<ToDoItem, NanoServiceError>> + Send;
 }
 
 #[cfg(feature = "sqlx-postgres")]
 impl DeleteOne for SqlxPostgresDescriptor {
     fn delete_one(
-        title: String,
+        name: String,
     ) -> impl Future<Output = Result<ToDoItem, NanoServiceError>> + Send {
-        sqlx_postgres_delete_one(title)
+        sqlx_postgres_delete_one(name)
     }
 }
 
 #[cfg(feature = "sqlx-postgres")]
-async fn sqlx_postgres_delete_one(title: String) -> Result<ToDoItem, NanoServiceError> {
+async fn sqlx_postgres_delete_one(name: String) -> Result<ToDoItem, NanoServiceError> {
     let item = sqlx::query_as::<_, ToDoItem>(
         "
         DELETE FROM to_do_items
-        WHERE title = $1
-        RETURN *",
+        WHERE name = $1
+        RETURNING *",
     )
-    .bind(title)
+    .bind(name)
     .fetch_one(&*SQLX_POSTGRES_POOL)
     .await
     .map_err(|e| NanoServiceError::new(e.to_string(), NanoServiceErrorStatus::Unknown))?;
@@ -49,16 +49,16 @@ async fn sqlx_postgres_delete_one(title: String) -> Result<ToDoItem, NanoService
 #[cfg(feature = "json-file")]
 impl DeleteOne for JsonFileDescriptor {
     fn delete_one(
-        title: String,
+        name: String,
     ) -> impl Future<Output = Result<ToDoItem, NanoServiceError>> + Send {
-        json_file_delete_one(title)
+        json_file_delete_one(name)
     }
 }
 
 #[cfg(feature = "json-file")]
-async fn json_file_delete_one(title: String) -> Result<ToDoItem, NanoServiceError> {
+async fn json_file_delete_one(name: String) -> Result<ToDoItem, NanoServiceError> {
     let mut tasks = get_all::<ToDoItem>().unwrap_or_else(|_| HashMap::new());
-    let to_do_item = tasks.remove(&title).ok_or_else(|| {
+    let to_do_item = tasks.remove(&name).ok_or_else(|| {
         NanoServiceError::new(
             "Item not found".to_string(),
             NanoServiceErrorStatus::NotFound,

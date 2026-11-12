@@ -19,7 +19,11 @@ export class Url {
     return `${origin}/`;
   }
 
-  deleteUrl(id: number): string {
-    return `${this.baseUrl}api/v1/delete/${id}`;
+  deleteUrl(name: string): string {
+    return `${this.baseUrl}api/v1/delete/${encodeURIComponent(name)}`;
+  }
+
+  getByNameUrl(name: string): string {
+    return `${this.baseUrl}api/v1/get/${encodeURIComponent(name)}`;
   }
 }

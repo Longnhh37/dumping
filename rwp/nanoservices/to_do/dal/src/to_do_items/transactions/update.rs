@@ -39,13 +39,12 @@ async fn sqlx_postgres_update_one(item: ToDoItem) -> Result<ToDoItem, NanoServic
     let items = sqlx::query_as::<_, ToDoItem>(
         "
         UPDATE to_do_items
-        SET title = $1, status = $2
-        WHERE id = $3
+        SET status = $2
+        WHERE name = $1
         RETURNING *",
     )
-    .bind(item.title)
+    .bind(item.name)
     .bind(item.status.to_string())
-    .bind(item.id)
     .fetch_one(&*SQLX_POSTGRES_POOL)
     .await
     .map_err(|e| NanoServiceError::new(e.to_string(), NanoServiceErrorStatus::Unknown))?;
@@ -65,13 +64,13 @@ impl UpdateOne for JsonFileDescriptor {
 #[cfg(feature = "json-file")]
 async fn json_file_update_one(item: ToDoItem) -> Result<ToDoItem, NanoServiceError> {
     let mut tasks = get_all::<ToDoItem>().unwrap_or_else(|_| HashMap::new());
-    if !tasks.contains_key(&item.title) {
+    if !tasks.contains_key(&item.name) {
         return Err(NanoServiceError::new(
-            format!("Item with name {} not found", item.title),
+            format!("Item with name {} not found", item.name),
             NanoServiceErrorStatus::NotFound,
         ));
     }
-    tasks.insert(item.title.clone(), item.clone());
+    tasks.insert(item.name.clone(), item.clone());
     save_all(&tasks)?;
 
     Ok(item)

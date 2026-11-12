@@ -24,14 +24,12 @@ const App = () => {
 
     const initialize = async () => {
       try {
-        // Initialize WASM first
         await init();
 
         if (cancelled) return;
 
         setWasmReady(true);
 
-        // Fetch data after WASM initialization
         const response = await getAll();
 
         if (cancelled) return;
@@ -89,9 +87,8 @@ const App = () => {
         <div>
           {data.pending.map((item) => (
             <ToDoItem
-              key={item.id}
-              id={item.id}
-              title={item.title}
+              key={item.name}
+              name={item.name}
               status={item.status}
               buttonMessage={rust_generate_button_text(item.status)}
               passBackResponse={reRenderItems}
@@ -104,9 +101,8 @@ const App = () => {
         <div>
           {data.done.map((item) => (
             <ToDoItem
-              key={item.id}
-              id={item.id}
-              title={item.title}
+              key={item.name}
+              name={item.name}
               status={item.status}
               buttonMessage={rust_generate_button_text(item.status)}
               passBackResponse={reRenderItems}

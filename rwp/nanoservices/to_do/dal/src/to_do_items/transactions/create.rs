@@ -35,11 +35,11 @@ impl SaveOne for SqlxPostgresDescriptor {
 async fn sqlx_postgres_save_one(item: NewToDoItem) -> Result<ToDoItem, NanoServiceError> {
     let item = sqlx::query_as::<_, ToDoItem>(
         "
-    INSERT INTO to_do_items (title, status)
+    INSERT INTO to_do_items (name, status)
     VALUES ($1, $2)
     RETURNING *",
     )
-    .bind(item.title)
+    .bind(item.name)
     .bind(item.status.to_string())
     .fetch_one(&*SQLX_POSTGRES_POOL)
     .await
@@ -61,11 +61,10 @@ impl SaveOne for JsonFileDescriptor {
 async fn json_file_save_one(item: NewToDoItem) -> Result<ToDoItem, NanoServiceError> {
     let mut tasks = get_all::<ToDoItem>().unwrap_or_else(|_| HashMap::new());
     let to_do_item = ToDoItem {
-        id: 1,
-        title: item.title,
+        name: item.name,
         status: item.status.to_string(),
     };
-    tasks.insert(to_do_item.title.to_string(), to_do_item.clone());
+    tasks.insert(to_do_item.name.clone(), to_do_item.clone());
     save_all(&tasks)?;
 
     Ok(to_do_item)

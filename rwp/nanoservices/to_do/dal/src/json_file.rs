@@ -51,32 +51,32 @@ pub fn save_all<T: Serialize>(tasks: &HashMap<String, T>) -> Result<()> {
     )
 }
 
-pub fn get_one<T: DeserializeOwned>(id: &str) -> Result<T> {
-    get_all::<T>()?.remove(id).ok_or_else(|| {
+pub fn get_one<T: DeserializeOwned>(name: &str) -> Result<T> {
+    get_all::<T>()?.remove(name).ok_or_else(|| {
         NanoServiceError::new(
-            format!("Task with id {id} not found"),
+            format!("Task with name {name} not found"),
             NanoServiceErrorStatus::Unknown,
         )
     })
 }
 
-pub fn save_one<T>(id: &str, task: &T) -> Result<()>
+pub fn save_one<T>(name: &str, task: &T) -> Result<()>
 where
     T: Serialize + DeserializeOwned + Clone,
 {
     let mut tasks = get_all::<T>().unwrap_or_default();
-    tasks.insert(id.to_owned(), task.clone());
+    tasks.insert(name.to_owned(), task.clone());
     save_all(&tasks)
 }
 
-pub fn delete_one<T>(id: &str) -> Result<T>
+pub fn delete_one<T>(name: &str) -> Result<T>
 where
     T: Serialize + DeserializeOwned,
 {
     let mut tasks = get_all::<T>().unwrap_or_default();
-    let deleted = tasks.remove(id).ok_or_else(|| {
+    let deleted = tasks.remove(name).ok_or_else(|| {
         NanoServiceError::new(
-            format!("Task with title {id} not found"),
+            format!("Task with name {name} not found"),
             NanoServiceErrorStatus::NotFound,
         )
     })?;

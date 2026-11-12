@@ -67,7 +67,7 @@ impl GetByName for SqlxPostgresDescriptor {
 
 #[cfg(feature = "sqlx-postgres")]
 async fn sqlx_postgres_get_by_name(name: String) -> Result<ToDoItem, NanoServiceError> {
-    sqlx::query_as::<_, ToDoItem>("SELECT * FROM to_do_items WHERE title = $1")
+    sqlx::query_as::<_, ToDoItem>("SELECT * FROM to_do_items WHERE name = $1")
         .bind(name)
         .fetch_optional(&*SQLX_POSTGRES_POOL)
         .await

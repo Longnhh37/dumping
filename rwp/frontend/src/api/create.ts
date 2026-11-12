@@ -1,11 +1,11 @@
-import { ToDoItems, TaskStatus } from "../interfaces/toDoItems";
+import { NewToDoItem, ToDoItems, TaskStatus } from "../interfaces/toDoItems";
 import { postCall } from "./utils";
 import { Url } from "./url";
 
-export async function createToDoItemCall(title: string) {
-  const toDoItem = {
-    title: title,
+export async function createToDoItemCall(name: string) {
+  const toDoItem: NewToDoItem = {
+    name,
     status: TaskStatus.PENDING,
   };
-  return postCall<ToDoItems>(new Url().create, toDoItem, 201);
+  return postCall<ToDoItems, NewToDoItem>(new Url().create, toDoItem, 201);
 }

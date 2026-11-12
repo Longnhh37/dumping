@@ -5,15 +5,14 @@ use glue::errors::NanoServiceError;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NewToDoItem {
-    pub title: String,
+    pub name: String,
     pub status: TaskStatus,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "sqlx-postgres", derive(sqlx::FromRow))]
 pub struct ToDoItem {
-    pub id: i32,
-    pub title: String,
+    pub name: String,
     pub status: String,
 }
 

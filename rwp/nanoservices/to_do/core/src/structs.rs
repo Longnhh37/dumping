@@ -7,15 +7,15 @@ use crate::enums::TaskStatus;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TodoItem {
-    pub title: String,
+    pub name: String,
     pub status: TaskStatus,
 }
 
 impl fmt::Display for TodoItem {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.status {
-            TaskStatus::Pending => write!(f, "Pending: {}", self.title),
-            TaskStatus::Done => write!(f, "Done: {}", self.title),
+            TaskStatus::Pending => write!(f, "Pending: {}", self.name),
+            TaskStatus::Done => write!(f, "Done: {}", self.name),
         }
     }
 }
