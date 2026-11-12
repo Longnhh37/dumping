@@ -1,13 +1,12 @@
 use std::future::Future;
 
 use crate::to_do_items::schema::ToDoItem;
-use glue::errors::NanoServiceError;
+use glue::errors::{NanoServiceError, NanoServiceErrorStatus};
 
 #[cfg(feature = "json-file")]
 use {
     super::super::descriptors::JsonFileDescriptor,
     crate::json_file::{get_all, save_all},
-    glue::errors::NanoServiceErrorStatus,
     std::collections::HashMap,
 };
 
