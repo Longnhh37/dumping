@@ -7,8 +7,8 @@ use axum::{
     routing::get,
 };
 use rust_embed::RustEmbed;
-use to_do_dal::migrations::run_migrations as run_todo_migrations;
 use to_do_axum_server::api;
+use to_do_dal::migrations::run_migrations as run_todo_migrations;
 use tower_http::cors::{Any, CorsLayer};
 
 const INDEX_HTML: &str = include_str!("../index.html");
@@ -30,7 +30,9 @@ fn serve_frontend_asset(path: &str) -> Response {
         return NOT_FOUND.into_response();
     };
 
-    let mime = mime_guess::from_path(file).first_or_octet_stream().to_string();
+    let mime = mime_guess::from_path(file)
+        .first_or_octet_stream()
+        .to_string();
 
     (
         [
@@ -65,7 +67,9 @@ async fn catch_all(uri: Uri) -> Response {
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    run_todo_migrations().await.expect("Failed to run migrations");
+    run_todo_migrations()
+        .await
+        .expect("Failed to run migrations");
 
     let cors = CorsLayer::new()
         .allow_origin(Any)

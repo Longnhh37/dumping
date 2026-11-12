@@ -36,7 +36,7 @@ impl UpdateOne for SqlxPostgresDescriptor {
 
 #[cfg(feature = "sqlx-postgres")]
 async fn sqlx_postgres_update_one(item: ToDoItem) -> Result<ToDoItem, NanoServiceError> {
-    let items = sqlx::query_as::<_, ToDoItem>(
+    sqlx::query_as::<_, ToDoItem>(
         "
         UPDATE to_do_items
         SET status = $2
@@ -45,11 +45,10 @@ async fn sqlx_postgres_update_one(item: ToDoItem) -> Result<ToDoItem, NanoServic
     )
     .bind(item.name)
     .bind(item.status.to_string())
-    .fetch_one(&*SQLX_POSTGRES_POOL)
+    .fetch_optional(&*SQLX_POSTGRES_POOL)
     .await
-    .map_err(|e| NanoServiceError::new(e.to_string(), NanoServiceErrorStatus::Unknown))?;
-
-    Ok(items)
+    .map_err(|e| NanoServiceError::new(e.to_string(), NanoServiceErrorStatus::Unknown))?
+    .ok_or_else(|| NanoServiceError::new("Item not found", NanoServiceErrorStatus::NotFound))
 }
 
 #[cfg(feature = "json-file")]

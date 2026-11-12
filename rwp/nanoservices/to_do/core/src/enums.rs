@@ -33,4 +33,3 @@ impl fmt::Display for TaskStatus {
         }
     }
 }
-
