@@ -21,7 +21,6 @@ async fn index() -> Html<&'static str> {
     Html(INDEX_HTML)
 }
 
-/// Serves an embedded asset by its file name (directories are ignored).
 fn serve_frontend_asset(path: &str) -> Response {
     let Some(file) = Path::new(path).file_name().and_then(OsStr::to_str) else {
         return NOT_FOUND.into_response();
@@ -52,7 +51,6 @@ async fn catch_all(uri: Uri) -> Response {
         return serve_frontend_asset(path);
     }
 
-    // No extension or an HTML extension: serve the SPA entry point
     let wants_html = mime_guess::from_path(path)
         .first_raw()
         .is_none_or(|mime| mime.contains("text/html"));
