@@ -15,4 +15,4 @@ tests, frontend URL tests, TypeScript checking, and frontend build.
 
 To include the PostgreSQL-backed API smoke test, make sure PostgreSQL is running
 and run `RUN_POSTGRES_INTEGRATION=1 ./scripts/test.sh`. This starts the backend
-server on the configured `WEB_PORT` (8080 by default).
+server on the configured `TO_DO_WEB_PORT` (8080 by default).

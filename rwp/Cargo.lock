@@ -80,6 +80,7 @@ dependencies = [
  "auth-core",
  "auth-dal",
  "axum",
+ "dotenvy",
  "glue",
  "tokio",
 ]

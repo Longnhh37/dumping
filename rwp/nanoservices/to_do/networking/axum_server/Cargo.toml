@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 tokio.workspace = true
 axum.workspace = true
-dotenvy = "0.15.7"
+dotenvy.workspace = true
 to-do-core = { path = "../../core" }
 glue = { path = "../../../../glue", features = ["axum"] }
 to-do-dal = { path = "../../dal/", features = ["sqlx-postgres"] }

@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 axum.workspace = true
 tokio.workspace = true
+dotenvy.workspace = true
 auth-core = { path = "../../core/" }
 auth-dal = { path = "../../dal/" }
 glue = { path = "../../../../glue/", features = ["axum"] }
