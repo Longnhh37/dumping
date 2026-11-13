@@ -44,7 +44,6 @@ export async function getCall<X>(url: string, expectedResponse: number) {
   return handleRequest<X>({ method: "get", url }, expectedResponse);
 }
 
-// POST with a body: only X needs to be specified, T is inferred from `body`
 export async function postCall<X, T = unknown>(
   url: string,
   body: T,
@@ -56,7 +55,6 @@ export async function postCall<X, T = unknown>(
   );
 }
 
-// POST without a body (logout, trigger action, ...)
 export async function postCallNoBody<X>(
   url: string,
   expectedResponse: number,
