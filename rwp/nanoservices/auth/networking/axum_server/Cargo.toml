@@ -1,0 +1,11 @@
+[package]
+name = "auth-axum-server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum.workspace = true
+tokio.workspace = true
+auth-core = { path = "../../core/" }
+auth-dal = { path = "../../dal/" }
+glue = { path = "../../../../glue/", features = ["axum"] }
