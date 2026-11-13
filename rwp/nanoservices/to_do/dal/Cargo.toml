@@ -8,14 +8,8 @@ json-file = ["serde_json"]
 sqlx-postgres = ["sqlx"]
 
 [dependencies]
-sqlx = { version = "0.9", features = [
-  "postgres",
-  "json",
-  "migrate",
-  "runtime-tokio",
-  "macros",
-], optional = true }
-serde_json = { version = "1", optional = true }
-serde = { version = "1" }
+sqlx = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
+serde.workspace = true
 
 glue = { path = "../../../glue" }

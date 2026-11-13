@@ -8,13 +8,13 @@ name = "to_do_core"
 path = "src/lib.rs"
 
 [dependencies]
+serde.workspace = true
 clap = { version = "4.5.16", features = ["derive"] }
-serde = { version = "1", features = ["derive"] }
 to-do-dal = { path = "../dal" }
 glue = { path = "../../../glue" }
 
 [dev-dependencies]
-tokio = { version = "1", features = ["macros", "rt"] }
+tokio.workspace = true
 
 [features]
 json-file-storage = ["to-do-dal/json-file"]

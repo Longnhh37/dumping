@@ -6,11 +6,11 @@ edition = "2024"
 [dependencies]
 rust-embed = "8.13.0"
 mime_guess = "2.0.5"
-axum = "0.8"
-tokio = { version = "1.36.0", features = ["macros", "rt-multi-thread"] }
+axum.workspace = true
+tokio.workspace = true
 tower-http = { version = "0.7.1", features = ["cors"] }
 to-do-dal = { path = "../nanoservices/to_do/dal/", features = ["sqlx-postgres"] }
 to-do-axum-server = { path = "../nanoservices/to_do/networking/axum_server/" }
 
 [dev-dependencies]
-tower = { version = "0.5", features = ["util"] }
+tower.workspace = true
