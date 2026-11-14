@@ -8,5 +8,4 @@ serde.workspace = true
 sqlx.workspace = true
 argon2 = { version = "0.6.0", features = ["password-hash"] }
 uuid = { version = "1.29.2", features = ["serde", "v4"] }
-rand = "0.10.3"
 glue = { path = "../../../glue/" }

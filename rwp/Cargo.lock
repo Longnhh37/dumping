@@ -112,7 +112,6 @@ version = "0.1.0"
 dependencies = [
  "argon2",
  "glue",
- "rand",
  "serde",
  "sqlx",
  "uuid",
