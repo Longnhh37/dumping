@@ -5,6 +5,8 @@ services:
     restart: always
     ports:
       - "5432:5432"
+    volumes:
+      - ./scripts/init-auth-db.sql:/docker-entrypoint-initdb.d/10-auth-db.sql:ro
     environment:
       - "POSTGRES_USER=username"
       - "POSTGRES_DB=to_do"

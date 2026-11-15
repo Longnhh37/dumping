@@ -24,7 +24,7 @@ async fn main() -> std::io::Result<()> {
         .expect("failed to run migrations");
 
     let listener = TcpListener::bind(&address).await?;
-    let app = api::router(SqlxPostgresDescriptor::new(pool));
+    let app = api::router(api::AppState::new(SqlxPostgresDescriptor::new(pool)));
 
     println!("Serving app on {address}");
     axum::serve(listener, app).await

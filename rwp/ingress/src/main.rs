@@ -9,7 +9,13 @@ use axum::{
 use rust_embed::RustEmbed;
 use tower_http::cors::{Any, CorsLayer};
 
-use to_do_axum_server::api;
+use auth_dal::{
+    connections::sqlx_postgres::create_pool as create_auth_pool,
+    migrations::run_migrations as run_auth_migrations,
+    users::descriptors::SqlxPostgresDescriptor as AuthPostgresDescriptor,
+};
+use auth_server::api::router as auth_router;
+use to_do_axum_server::api as todo_api;
 use to_do_dal::{
     connections::sqlx_postgres::create_pool, migrations::run_migrations as run_todo_migrations,
     to_do_items::descriptors::SqlxPostgresDescriptor,
@@ -69,7 +75,7 @@ async fn catch_all(uri: Uri) -> Response {
     }
 }
 
-fn app(store: SqlxPostgresDescriptor) -> Router {
+fn app(todo_store: SqlxPostgresDescriptor, auth_store: AuthPostgresDescriptor) -> Router {
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods(Any)
@@ -77,7 +83,8 @@ fn app(store: SqlxPostgresDescriptor) -> Router {
 
     Router::new()
         .route("/", get(index))
-        .merge(api::router(store))
+        .merge(todo_api::router(todo_store))
+        .merge(auth_router(auth_server::api::AppState::new(auth_store)))
         .fallback(catch_all)
         .layer(cors)
 }
@@ -93,10 +100,23 @@ async fn main() -> std::io::Result<()> {
     let pool = create_pool(&database_url, max_connections).expect("failed to create to-do pool");
     run_todo_migrations(&pool)
         .await
-        .expect("Failed to run migrations");
+        .expect("Failed to run to-do migrations");
+
+    let auth_database_url = std::env::var("AUTH_DB_URL").expect("AUTH_DB_URL must be set");
+    let auth_max_connections = std::env::var("AUTH_MAX_CONNECTIONS")
+        .unwrap_or_else(|_| "5".to_string())
+        .parse::<u32>()
+        .expect("AUTH_MAX_CONNECTIONS must be a positive integer");
+    let auth_pool = create_auth_pool(&auth_database_url, auth_max_connections)
+        .expect("failed to create auth pool");
+    run_auth_migrations(&auth_pool)
+        .await
+        .expect("Failed to run auth migrations");
 
     let listener = tokio::net::TcpListener::bind((Ipv4Addr::UNSPECIFIED, 8001)).await?;
-    axum::serve(listener, app(SqlxPostgresDescriptor::new(pool))).await
+    let todo_store = SqlxPostgresDescriptor::new(pool);
+    let auth_store = AuthPostgresDescriptor::new(auth_pool);
+    axum::serve(listener, app(todo_store, auth_store)).await
 }
 
 #[cfg(test)]
@@ -107,14 +127,19 @@ mod tests {
     };
     use tower::ServiceExt;
 
-    use super::app;
+    use super::{AuthPostgresDescriptor, app};
+    use auth_dal::connections::sqlx_postgres::create_pool as create_auth_pool;
     use to_do_dal::{
         connections::sqlx_postgres::create_pool, to_do_items::descriptors::SqlxPostgresDescriptor,
     };
 
     fn test_app() -> axum::Router {
-        let pool = create_pool("postgres://test:test@127.0.0.1/test", 1).unwrap();
-        app(SqlxPostgresDescriptor::new(pool))
+        let todo_pool = create_pool("postgres://test:test@127.0.0.1/todo_test", 1).unwrap();
+        let auth_pool = create_auth_pool("postgres://test:test@127.0.0.1/auth_test", 1).unwrap();
+        app(
+            SqlxPostgresDescriptor::new(todo_pool),
+            AuthPostgresDescriptor::new(auth_pool),
+        )
     }
 
     #[tokio::test]
