@@ -27,50 +27,36 @@ pub trait UpdateOne {
 
 #[cfg(feature = "sqlx-postgres")]
 impl UpdateOne for SqlxPostgresDescriptor {
-    fn update_one(
-        item: ToDoItem,
-    ) -> impl Future<Output = Result<ToDoItem, NanoServiceError>> + Send {
-        sqlx_postgres_update_one(item)
-    }
-}
-
-#[cfg(feature = "sqlx-postgres")]
-async fn sqlx_postgres_update_one(item: ToDoItem) -> Result<ToDoItem, NanoServiceError> {
-    sqlx::query_as::<_, ToDoItem>(
-        "
+    async fn update_one(item: ToDoItem) -> Result<ToDoItem, NanoServiceError> {
+        sqlx::query_as::<_, ToDoItem>(
+            "
         UPDATE to_do_items
         SET status = $2
         WHERE name = $1
         RETURNING *",
-    )
-    .bind(item.name)
-    .bind(item.status.to_string())
-    .fetch_optional(&*SQLX_POSTGRES_POOL)
-    .await
-    .map_err(|e| NanoServiceError::new(e.to_string(), NanoServiceErrorStatus::Unknown))?
-    .ok_or_else(|| NanoServiceError::new("Item not found", NanoServiceErrorStatus::NotFound))
+        )
+        .bind(item.name)
+        .bind(item.status.to_string())
+        .fetch_optional(&*SQLX_POSTGRES_POOL)
+        .await
+        .map_err(|e| NanoServiceError::new(e.to_string(), NanoServiceErrorStatus::Unknown))?
+        .ok_or_else(|| NanoServiceError::new("Item not found", NanoServiceErrorStatus::NotFound))
+    }
 }
 
 #[cfg(feature = "json-file")]
 impl UpdateOne for JsonFileDescriptor {
-    fn update_one(
-        item: ToDoItem,
-    ) -> impl Future<Output = Result<ToDoItem, NanoServiceError>> + Send {
-        json_file_update_one(item)
-    }
-}
+    async fn update_one(item: ToDoItem) -> Result<ToDoItem, NanoServiceError> {
+        let mut tasks = get_all::<ToDoItem>().unwrap_or_else(|_| HashMap::new());
+        if !tasks.contains_key(&item.name) {
+            return Err(NanoServiceError::new(
+                format!("Item with name {} not found", item.name),
+                NanoServiceErrorStatus::NotFound,
+            ));
+        }
+        tasks.insert(item.name.clone(), item.clone());
+        save_all(&tasks)?;
 
-#[cfg(feature = "json-file")]
-async fn json_file_update_one(item: ToDoItem) -> Result<ToDoItem, NanoServiceError> {
-    let mut tasks = get_all::<ToDoItem>().unwrap_or_else(|_| HashMap::new());
-    if !tasks.contains_key(&item.name) {
-        return Err(NanoServiceError::new(
-            format!("Item with name {} not found", item.name),
-            NanoServiceErrorStatus::NotFound,
-        ));
+        Ok(item)
     }
-    tasks.insert(item.name.clone(), item.clone());
-    save_all(&tasks)?;
-
-    Ok(item)
 }

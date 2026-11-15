@@ -15,8 +15,6 @@ pub async fn get_by_name<T: GetByName>(name: &str) -> Result<ToDoItem, NanoServi
 
 #[cfg(test)]
 mod tests {
-    use std::future::Future;
-
     use super::{get_all, get_by_name};
     use glue::errors::NanoServiceError;
     use to_do_dal::to_do_items::{
@@ -27,8 +25,8 @@ mod tests {
     struct TestStore;
 
     impl GetAll for TestStore {
-        fn get_all() -> impl Future<Output = Result<Vec<ToDoItem>, NanoServiceError>> + Send {
-            std::future::ready(Ok(vec![
+        async fn get_all() -> Result<Vec<ToDoItem>, NanoServiceError> {
+            Ok(vec![
                 ToDoItem {
                     name: "pending-item".into(),
                     status: "PENDING".into(),
@@ -37,18 +35,16 @@ mod tests {
                     name: "done-item".into(),
                     status: "DONE".into(),
                 },
-            ]))
+            ])
         }
     }
 
     impl GetByName for TestStore {
-        fn get_by_name(
-            name: String,
-        ) -> impl Future<Output = Result<ToDoItem, NanoServiceError>> + Send {
-            std::future::ready(Ok(ToDoItem {
+        async fn get_by_name(name: String) -> Result<ToDoItem, NanoServiceError> {
+            Ok(ToDoItem {
                 name,
                 status: "DONE".into(),
-            }))
+            })
         }
     }
 

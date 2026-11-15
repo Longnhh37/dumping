@@ -1,6 +1,5 @@
 use std::{
     collections::HashMap,
-    future::Future,
     sync::{Mutex, OnceLock},
 };
 
@@ -32,66 +31,52 @@ fn items() -> &'static Mutex<HashMap<String, ToDoItem>> {
 }
 
 impl GetAll for MemoryStore {
-    fn get_all() -> impl Future<Output = Result<Vec<ToDoItem>, NanoServiceError>> + Send {
-        async { Ok(items().lock().unwrap().values().cloned().collect()) }
+    async fn get_all() -> Result<Vec<ToDoItem>, NanoServiceError> {
+        Ok(items().lock().unwrap().values().cloned().collect())
     }
 }
 
 impl GetByName for MemoryStore {
-    fn get_by_name(
-        name: String,
-    ) -> impl Future<Output = Result<ToDoItem, NanoServiceError>> + Send {
-        async move {
-            items().lock().unwrap().get(&name).cloned().ok_or_else(|| {
-                NanoServiceError::new("Item not found", NanoServiceErrorStatus::NotFound)
-            })
-        }
+    async fn get_by_name(name: String) -> Result<ToDoItem, NanoServiceError> {
+        items().lock().unwrap().get(&name).cloned().ok_or_else(|| {
+            NanoServiceError::new("Item not found", NanoServiceErrorStatus::NotFound)
+        })
     }
 }
 
 impl SaveOne for MemoryStore {
-    fn save_one(
-        item: NewToDoItem,
-    ) -> impl Future<Output = Result<ToDoItem, NanoServiceError>> + Send {
-        async move {
-            let item = ToDoItem {
-                name: item.name,
-                status: item.status.to_string(),
-            };
-            items()
-                .lock()
-                .unwrap()
-                .insert(item.name.clone(), item.clone());
-            Ok(item)
-        }
+    async fn save_one(item: NewToDoItem) -> Result<ToDoItem, NanoServiceError> {
+        let item = ToDoItem {
+            name: item.name,
+            status: item.status.to_string(),
+        };
+        items()
+            .lock()
+            .unwrap()
+            .insert(item.name.clone(), item.clone());
+        Ok(item)
     }
 }
 
 impl DeleteOne for MemoryStore {
-    fn delete_one(name: String) -> impl Future<Output = Result<ToDoItem, NanoServiceError>> + Send {
-        async move {
-            items().lock().unwrap().remove(&name).ok_or_else(|| {
-                NanoServiceError::new("Item not found", NanoServiceErrorStatus::NotFound)
-            })
-        }
+    async fn delete_one(name: String) -> Result<ToDoItem, NanoServiceError> {
+        items().lock().unwrap().remove(&name).ok_or_else(|| {
+            NanoServiceError::new("Item not found", NanoServiceErrorStatus::NotFound)
+        })
     }
 }
 
 impl UpdateOne for MemoryStore {
-    fn update_one(
-        item: ToDoItem,
-    ) -> impl Future<Output = Result<ToDoItem, NanoServiceError>> + Send {
-        async move {
-            let mut store = items().lock().unwrap();
-            if !store.contains_key(&item.name) {
-                return Err(NanoServiceError::new(
-                    "Item not found",
-                    NanoServiceErrorStatus::NotFound,
-                ));
-            }
-            store.insert(item.name.clone(), item.clone());
-            Ok(item)
+    async fn update_one(item: ToDoItem) -> Result<ToDoItem, NanoServiceError> {
+        let mut store = items().lock().unwrap();
+        if !store.contains_key(&item.name) {
+            return Err(NanoServiceError::new(
+                "Item not found",
+                NanoServiceErrorStatus::NotFound,
+            ));
         }
+        store.insert(item.name.clone(), item.clone());
+        Ok(item)
     }
 }
 
