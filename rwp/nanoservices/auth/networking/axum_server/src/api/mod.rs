@@ -4,8 +4,9 @@ pub mod users;
 use axum::Router;
 
 pub fn router() -> Router {
-    let app = Router::new();
-    let app = users::users_factory(app);
-    let app = auth::auth_factory(app);
-    app
+    let api = Router::new()
+        .merge(users::users_router())
+        .merge(auth::auth_router());
+
+    Router::new().nest("/api/v1", api)
 }

@@ -1,8 +1,11 @@
-pub mod logout;
 pub mod login;
+pub mod logout;
 
 use axum::Router;
 
-pub fn auth_factory(app: Router) -> Router {
-    app
+use auth_core::api::users::create;
+use auth_dal::users::descriptors::SqlxPostgresDescriptor;
+
+pub fn auth_router() -> Router {
+    Router::new()
 }
