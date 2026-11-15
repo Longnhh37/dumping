@@ -1,8 +1,41 @@
+use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+use crate::errors::{NanoServiceError, NanoServiceErrorStatus};
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct HeaderToken {
-    pub message: String,
+    pub unique_id: String,
+}
+
+impl HeaderToken {
+    pub fn get_key() -> Result<String, NanoServiceError> {
+        std::env::var("JWT_SECRET").map_err(|err| {
+            NanoServiceError::new(err.to_string(), NanoServiceErrorStatus::Unauthorized)
+        })
+    }
+
+    pub fn encode(self) -> Result<String, NanoServiceError> {
+        let key_str = Self::get_key()?;
+        let key = EncodingKey::from_secret(key_str.as_ref());
+        jsonwebtoken::encode(&Header::default(), &self, &key).map_err(|err| {
+            NanoServiceError::new(err.to_string(), NanoServiceErrorStatus::Unauthorized)
+        })
+    }
+
+    pub fn decode(token: &str) -> Result<Self, NanoServiceError> {
+        let key_str = Self::get_key()?;
+        let key = DecodingKey::from_secret(key_str.as_ref());
+
+        let mut validation = Validation::new(Algorithm::HS256);
+        validation.required_spec_claims.remove("exp");
+
+        jsonwebtoken::decode(token, &key, &validation)
+            .map(|ok| ok.claims)
+            .map_err(|err| {
+                NanoServiceError::new(err.to_string(), NanoServiceErrorStatus::Unauthorized)
+            })
+    }
 }
 
 #[cfg(feature = "axum")]
@@ -35,9 +68,7 @@ mod axum_impl {
                 ));
             };
 
-            Ok(HeaderToken {
-                message: token.to_owned(),
-            })
+            HeaderToken::decode(token)
         }
     }
 }

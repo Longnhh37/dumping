@@ -2,7 +2,7 @@ use std::future::Future;
 
 use crate::{
     connections::sqlx_postgres::SQLX_POSTGRES_POOL,
-    users::descriptors::SqlxPostFresDescriptor,
+    users::descriptors::SqlxPostgresDescriptor,
     users::schema::{NewUser, User},
 };
 use glue::errors::{NanoServiceError, NanoServiceErrorStatus};
@@ -11,7 +11,7 @@ pub trait SaveOne {
     fn save_one(user: NewUser) -> impl Future<Output = Result<User, NanoServiceError>> + Send;
 }
 
-impl SaveOne for SqlxPostFresDescriptor {
+impl SaveOne for SqlxPostgresDescriptor {
     fn save_one(user: NewUser) -> impl Future<Output = Result<User, NanoServiceError>> + Send {
         sqlx_postgres_save_one(user)
     }
