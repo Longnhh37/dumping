@@ -5,20 +5,30 @@ use glue::{
 };
 
 pub async fn login<T: GetByEmail>(
+    store: &T,
     email: String,
     password: String,
 ) -> Result<String, NanoServiceError> {
-    let user = T::get_by_email(&self, email).await?;
-    let verified = user.verify_password(password)?;
-    if verified {
-        Ok(HeaderToken {
-            unique_id: user.unique_id,
+    let user = store.get_by_email(email).await.map_err(|error| {
+        if error.status == NanoServiceErrorStatus::NotFound {
+            NanoServiceError::new(
+                "invalid email or password",
+                NanoServiceErrorStatus::Unauthorized,
+            )
+        } else {
+            error
         }
-        .encode()?)
-    } else {
-        Err(NanoServiceError::new(
-            "invalid password".to_string(),
+    })?;
+
+    if !user.verify_password(password)? {
+        return Err(NanoServiceError::new(
+            "invalid email or password",
             NanoServiceErrorStatus::Unauthorized,
-        ))
+        ));
     }
+
+    HeaderToken {
+        unique_id: user.unique_id,
+    }
+    .encode()
 }

@@ -7,12 +7,13 @@ use axum::{
     routing::get,
 };
 use rust_embed::RustEmbed;
+use tower_http::cors::{Any, CorsLayer};
+
 use to_do_axum_server::api;
 use to_do_dal::{
     connections::sqlx_postgres::create_pool, migrations::run_migrations as run_todo_migrations,
     to_do_items::descriptors::SqlxPostgresDescriptor,
 };
-use tower_http::cors::{Any, CorsLayer};
 
 const INDEX_HTML: &str = include_str!("../index.html");
 const NOT_FOUND: (StatusCode, &str) = (StatusCode::NOT_FOUND, "404 Not Found");
