@@ -11,23 +11,21 @@ use {
 };
 
 #[cfg(feature = "sqlx-postgres")]
-use {
-    super::super::descriptors::SqlxPostgresDescriptor,
-    crate::connections::sqlx_postgres::SQLX_POSTGRES_POOL,
-};
+use super::super::descriptors::SqlxPostgresDescriptor;
 
 #[cfg(any(feature = "json-file", feature = "sqlx-postgres"))]
 use glue::errors::NanoServiceErrorStatus;
 
 pub trait UpdateOne {
     fn update_one(
+        &self,
         item: ToDoItem,
     ) -> impl Future<Output = Result<ToDoItem, NanoServiceError>> + Send;
 }
 
 #[cfg(feature = "sqlx-postgres")]
 impl UpdateOne for SqlxPostgresDescriptor {
-    async fn update_one(item: ToDoItem) -> Result<ToDoItem, NanoServiceError> {
+    async fn update_one(&self, item: ToDoItem) -> Result<ToDoItem, NanoServiceError> {
         sqlx::query_as::<_, ToDoItem>(
             "
         UPDATE to_do_items
@@ -37,7 +35,7 @@ impl UpdateOne for SqlxPostgresDescriptor {
         )
         .bind(item.name)
         .bind(item.status.to_string())
-        .fetch_optional(&*SQLX_POSTGRES_POOL)
+        .fetch_optional(&self.pool)
         .await
         .map_err(|e| NanoServiceError::new(e.to_string(), NanoServiceErrorStatus::Unknown))?
         .ok_or_else(|| NanoServiceError::new("Item not found", NanoServiceErrorStatus::NotFound))
@@ -46,7 +44,7 @@ impl UpdateOne for SqlxPostgresDescriptor {
 
 #[cfg(feature = "json-file")]
 impl UpdateOne for JsonFileDescriptor {
-    async fn update_one(item: ToDoItem) -> Result<ToDoItem, NanoServiceError> {
+    async fn update_one(&self, item: ToDoItem) -> Result<ToDoItem, NanoServiceError> {
         let mut tasks = get_all::<ToDoItem>().unwrap_or_else(|_| HashMap::new());
         if !tasks.contains_key(&item.name) {
             return Err(NanoServiceError::new(

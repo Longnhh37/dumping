@@ -1,14 +1,14 @@
 use glue::errors::NanoServiceError;
 
-use crate::connections::sqlx_postgres::SQLX_POSTGRES_POOL;
+use sqlx::PgPool;
 
-pub async fn run_migrations() -> Result<(), NanoServiceError> {
+pub async fn run_migrations(pool: &PgPool) -> Result<(), NanoServiceError> {
     println!("Migrating to-do database...");
 
     let mut migrations = sqlx::migrate!("./migrations");
     migrations.set_ignore_missing(true);
 
-    migrations.run(&*SQLX_POSTGRES_POOL).await.map_err(|e| {
+    migrations.run(pool).await.map_err(|e| {
         NanoServiceError::new(e.to_string(), glue::errors::NanoServiceErrorStatus::Unknown)
     })?;
 

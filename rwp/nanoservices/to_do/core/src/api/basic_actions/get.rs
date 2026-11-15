@@ -4,13 +4,16 @@ use to_do_dal::to_do_items::{
     transactions::get::{GetAll, GetByName},
 };
 
-pub async fn get_all<T: GetAll>() -> Result<AllTodoItems, NanoServiceError> {
-    let all_items = T::get_all().await?;
+pub async fn get_all<T: GetAll>(store: &T) -> Result<AllTodoItems, NanoServiceError> {
+    let all_items = store.get_all().await?;
     AllTodoItems::from_vec(all_items)
 }
 
-pub async fn get_by_name<T: GetByName>(name: &str) -> Result<ToDoItem, NanoServiceError> {
-    T::get_by_name(name.to_owned()).await
+pub async fn get_by_name<T: GetByName>(
+    store: &T,
+    name: &str,
+) -> Result<ToDoItem, NanoServiceError> {
+    store.get_by_name(name.to_owned()).await
 }
 
 #[cfg(test)]
@@ -25,7 +28,7 @@ mod tests {
     struct TestStore;
 
     impl GetAll for TestStore {
-        async fn get_all() -> Result<Vec<ToDoItem>, NanoServiceError> {
+        async fn get_all(&self) -> Result<Vec<ToDoItem>, NanoServiceError> {
             Ok(vec![
                 ToDoItem {
                     name: "pending-item".into(),
@@ -40,7 +43,7 @@ mod tests {
     }
 
     impl GetByName for TestStore {
-        async fn get_by_name(name: String) -> Result<ToDoItem, NanoServiceError> {
+        async fn get_by_name(&self, name: String) -> Result<ToDoItem, NanoServiceError> {
             Ok(ToDoItem {
                 name,
                 status: "DONE".into(),
@@ -50,14 +53,14 @@ mod tests {
 
     #[tokio::test]
     async fn get_all_delegates_and_returns_status_groups() {
-        let items = get_all::<TestStore>().await.unwrap();
+        let items = get_all(&TestStore).await.unwrap();
         assert_eq!(items.pending[0].name, "pending-item");
         assert_eq!(items.done[0].name, "done-item");
     }
 
     #[tokio::test]
     async fn get_by_name_forwards_the_name_to_the_store() {
-        let item = get_by_name::<TestStore>("requested-name").await.unwrap();
+        let item = get_by_name(&TestStore, "requested-name").await.unwrap();
         assert_eq!(item.name, "requested-name");
         assert_eq!(item.status, "DONE");
     }

@@ -8,7 +8,10 @@ use axum::{
 };
 use rust_embed::RustEmbed;
 use to_do_axum_server::api;
-use to_do_dal::migrations::run_migrations as run_todo_migrations;
+use to_do_dal::{
+    connections::sqlx_postgres::create_pool, migrations::run_migrations as run_todo_migrations,
+    to_do_items::descriptors::SqlxPostgresDescriptor,
+};
 use tower_http::cors::{Any, CorsLayer};
 
 const INDEX_HTML: &str = include_str!("../index.html");
@@ -65,7 +68,7 @@ async fn catch_all(uri: Uri) -> Response {
     }
 }
 
-fn app() -> Router {
+fn app(store: SqlxPostgresDescriptor) -> Router {
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods(Any)
@@ -73,19 +76,26 @@ fn app() -> Router {
 
     Router::new()
         .route("/", get(index))
-        .merge(api::router())
+        .merge(api::router(store))
         .fallback(catch_all)
         .layer(cors)
 }
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    run_todo_migrations()
+    dotenvy::dotenv().ok();
+    let database_url = std::env::var("TO_DO_DB_URL").expect("TO_DO_DB_URL must be set");
+    let max_connections = std::env::var("TO_DO_MAX_CONNECTIONS")
+        .unwrap_or_else(|_| "5".to_string())
+        .parse::<u32>()
+        .expect("TO_DO_MAX_CONNECTIONS must be a positive integer");
+    let pool = create_pool(&database_url, max_connections).expect("failed to create to-do pool");
+    run_todo_migrations(&pool)
         .await
         .expect("Failed to run migrations");
 
     let listener = tokio::net::TcpListener::bind((Ipv4Addr::UNSPECIFIED, 8001)).await?;
-    axum::serve(listener, app()).await
+    axum::serve(listener, app(SqlxPostgresDescriptor::new(pool))).await
 }
 
 #[cfg(test)]
@@ -97,15 +107,23 @@ mod tests {
     use tower::ServiceExt;
 
     use super::app;
+    use to_do_dal::{
+        connections::sqlx_postgres::create_pool, to_do_items::descriptors::SqlxPostgresDescriptor,
+    };
+
+    fn test_app() -> axum::Router {
+        let pool = create_pool("postgres://test:test@127.0.0.1/test", 1).unwrap();
+        app(SqlxPostgresDescriptor::new(pool))
+    }
 
     #[tokio::test]
     async fn serves_the_frontend_shell_and_assets() {
-        let response = app()
+        let response = test_app()
             .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
             .await
             .unwrap();
         assert_eq!(response.status(), StatusCode::OK);
-        let response = app()
+        let response = test_app()
             .oneshot(
                 Request::builder()
                     .uri("/bundle.css")
@@ -119,7 +137,7 @@ mod tests {
 
     #[tokio::test]
     async fn routes_api_requests_and_returns_404_for_unknown_api_paths() {
-        let invalid_json = app()
+        let invalid_json = test_app()
             .oneshot(
                 Request::builder()
                     .method(Method::POST)
@@ -132,7 +150,7 @@ mod tests {
             .unwrap();
         assert_eq!(invalid_json.status(), StatusCode::BAD_REQUEST);
 
-        let missing_route = app()
+        let missing_route = test_app()
             .oneshot(
                 Request::builder()
                     .uri("/api/v1/unknown")

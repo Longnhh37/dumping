@@ -3,9 +3,6 @@ pub mod logout;
 
 use axum::Router;
 
-use auth_core::api::users::create;
-use auth_dal::users::descriptors::SqlxPostgresDescriptor;
-
-pub fn auth_router() -> Router {
+pub fn auth_router<T: Clone + Send + Sync + 'static>() -> Router<T> {
     Router::new()
 }

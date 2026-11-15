@@ -903,6 +903,7 @@ name = "ingress"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "dotenvy",
  "mime_guess",
  "rust-embed",
  "to-do-axum-server",

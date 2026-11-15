@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    sync::{Mutex, OnceLock},
+    sync::{Arc, Mutex},
 };
 
 use axum::{
@@ -22,35 +22,30 @@ use to_do_dal::to_do_items::{
 };
 use tower::ServiceExt;
 
-struct MemoryStore;
-
-static ITEMS: OnceLock<Mutex<HashMap<String, ToDoItem>>> = OnceLock::new();
-
-fn items() -> &'static Mutex<HashMap<String, ToDoItem>> {
-    ITEMS.get_or_init(|| Mutex::new(HashMap::new()))
-}
+#[derive(Clone, Default)]
+struct MemoryStore(Arc<Mutex<HashMap<String, ToDoItem>>>);
 
 impl GetAll for MemoryStore {
-    async fn get_all() -> Result<Vec<ToDoItem>, NanoServiceError> {
-        Ok(items().lock().unwrap().values().cloned().collect())
+    async fn get_all(&self) -> Result<Vec<ToDoItem>, NanoServiceError> {
+        Ok(self.0.lock().unwrap().values().cloned().collect())
     }
 }
 
 impl GetByName for MemoryStore {
-    async fn get_by_name(name: String) -> Result<ToDoItem, NanoServiceError> {
-        items().lock().unwrap().get(&name).cloned().ok_or_else(|| {
+    async fn get_by_name(&self, name: String) -> Result<ToDoItem, NanoServiceError> {
+        self.0.lock().unwrap().get(&name).cloned().ok_or_else(|| {
             NanoServiceError::new("Item not found", NanoServiceErrorStatus::NotFound)
         })
     }
 }
 
 impl SaveOne for MemoryStore {
-    async fn save_one(item: NewToDoItem) -> Result<ToDoItem, NanoServiceError> {
+    async fn save_one(&self, item: NewToDoItem) -> Result<ToDoItem, NanoServiceError> {
         let item = ToDoItem {
             name: item.name,
             status: item.status.to_string(),
         };
-        items()
+        self.0
             .lock()
             .unwrap()
             .insert(item.name.clone(), item.clone());
@@ -59,16 +54,16 @@ impl SaveOne for MemoryStore {
 }
 
 impl DeleteOne for MemoryStore {
-    async fn delete_one(name: String) -> Result<ToDoItem, NanoServiceError> {
-        items().lock().unwrap().remove(&name).ok_or_else(|| {
+    async fn delete_one(&self, name: String) -> Result<ToDoItem, NanoServiceError> {
+        self.0.lock().unwrap().remove(&name).ok_or_else(|| {
             NanoServiceError::new("Item not found", NanoServiceErrorStatus::NotFound)
         })
     }
 }
 
 impl UpdateOne for MemoryStore {
-    async fn update_one(item: ToDoItem) -> Result<ToDoItem, NanoServiceError> {
-        let mut store = items().lock().unwrap();
+    async fn update_one(&self, item: ToDoItem) -> Result<ToDoItem, NanoServiceError> {
+        let mut store = self.0.lock().unwrap();
         if !store.contains_key(&item.name) {
             return Err(NanoServiceError::new(
                 "Item not found",
@@ -108,8 +103,7 @@ async fn response_json(response: Response<Body>) -> Value {
 
 #[tokio::test]
 async fn api_routes_cover_item_lifecycle_and_auth() {
-    items().lock().unwrap().clear();
-    let app = basic_actions_router::<MemoryStore>();
+    let app = basic_actions_router(MemoryStore::default());
     let name = "api-wire-integration";
 
     let created = send(

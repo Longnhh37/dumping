@@ -16,9 +16,9 @@ use to_do_dal::to_do_items::transactions::{
 
 use to_do_dal::to_do_items::descriptors::SqlxPostgresDescriptor;
 
-pub fn basic_actions_router<T>() -> Router
+pub fn basic_actions_router<T>(store: T) -> Router
 where
-    T: GetAll + GetByName + DeleteOne + SaveOne + UpdateOne + 'static,
+    T: GetAll + GetByName + DeleteOne + SaveOne + UpdateOne + Clone + Send + Sync + 'static,
 {
     let get_routes = Router::new()
         .route("/all", get(get::get_all::<T>))
@@ -30,9 +30,9 @@ where
         .route("/create", post(create::create::<T>))
         .route("/update", patch(update::update::<T>));
 
-    Router::new().nest("/api/v1", api_v1)
+    Router::new().nest("/api/v1", api_v1).with_state(store)
 }
 
-pub fn router() -> Router {
-    basic_actions_router::<SqlxPostgresDescriptor>()
+pub fn router(store: SqlxPostgresDescriptor) -> Router {
+    basic_actions_router(store)
 }
