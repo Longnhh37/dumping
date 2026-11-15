@@ -12,6 +12,8 @@ Configure their URLs and pool sizes with `TO_DO_DB_URL`,
 `TO_DO_MAX_CONNECTIONS`, `AUTH_DB_URL`, and `AUTH_MAX_CONNECTIONS` in `.env`.
 If `.env` was created before these settings were added, set both max-connection
 values to `5`.
+Run `./scripts/cleanup.sh` to stop the local PostgreSQL container while
+preserving its database data.
 
 ## Test
 
