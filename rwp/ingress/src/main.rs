@@ -93,7 +93,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pool = pool_from_env("TO_DO")?;
     run_todo_migrations(&pool).await?;
     let auth_pool = pool_from_env("AUTH")?;
-    run_auth_migrations(&pool).await?;
+    run_auth_migrations(&auth_pool).await?;
 
     let host = std::env::var("INGRESS_WEB_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
     let port = std::env::var("INGRESS_WEB_PORT").unwrap_or_else(|_| "8001".to_string());
