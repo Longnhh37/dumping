@@ -1,55 +1,33 @@
 use std::future::Future;
 
-use crate::to_do_items::schema::{NewToDoItem, ToDoItem};
-use glue::errors::NanoServiceError;
-
-#[cfg(feature = "json-file")]
-use {
-    super::super::descriptors::JsonFileDescriptor,
-    crate::json_file::{get_all, save_all},
-    std::collections::HashMap,
-};
+use crate::to_do_items::schema::ToDoItem;
+use glue::{db::db_error, errors::NanoServiceError};
 
 #[cfg(feature = "sqlx-postgres")]
-use {super::super::descriptors::SqlxPostgresDescriptor, glue::errors::NanoServiceErrorStatus};
+use super::super::descriptors::SqlxPostgresDescriptor;
 
 pub trait SaveOne {
     fn save_one(
         &self,
-        item: NewToDoItem,
+        item: ToDoItem,
     ) -> impl Future<Output = Result<ToDoItem, NanoServiceError>> + Send;
 }
 
 #[cfg(feature = "sqlx-postgres")]
 impl SaveOne for SqlxPostgresDescriptor {
-    async fn save_one(&self, item: NewToDoItem) -> Result<ToDoItem, NanoServiceError> {
+    async fn save_one(&self, item: ToDoItem) -> Result<ToDoItem, NanoServiceError> {
         let item = sqlx::query_as::<_, ToDoItem>(
             "
     INSERT INTO to_do_items (name, status)
     VALUES ($1, $2)
-    RETURNING *",
+    RETURNING name, status",
         )
         .bind(item.name)
         .bind(item.status.to_string())
         .fetch_one(&self.pool)
         .await
-        .map_err(|e| NanoServiceError::new(e.to_string(), NanoServiceErrorStatus::Unknown))?;
+        .map_err(db_error)?;
 
         Ok(item)
-    }
-}
-
-#[cfg(feature = "json-file")]
-impl SaveOne for JsonFileDescriptor {
-    async fn save_one(&self, item: NewToDoItem) -> Result<ToDoItem, NanoServiceError> {
-        let mut tasks = get_all::<ToDoItem>().unwrap_or_else(|_| HashMap::new());
-        let to_do_item = ToDoItem {
-            name: item.name,
-            status: item.status.to_string(),
-        };
-        tasks.insert(to_do_item.name.clone(), to_do_item.clone());
-        save_all(&tasks)?;
-
-        Ok(to_do_item)
     }
 }

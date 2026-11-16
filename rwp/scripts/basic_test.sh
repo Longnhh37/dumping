@@ -11,6 +11,7 @@ cd "${0:A:h}/.."
 OUTPUT=basic_test_output.txt
 BIN="${CARGO_TARGET_DIR:-target}/debug/to-do-axum-server"
 BASE=":8080/api/v1"
+TOKEN="${TOKEN:?export TOKEN=<jwt> first, e.g. TOKEN=\$(xh --ignore-stdin -a EMAIL:PASS POST :8001/api/v1/auth/login | jq -r .)}"
 RUN_ID="${$}-$(date +%s)"
 WRITING="smoke-writing-${RUN_ID}"
 CODING="smoke-coding-${RUN_ID}"
@@ -19,14 +20,14 @@ CODING="smoke-coding-${RUN_ID}"
 echo "Building axum server..."
 cargo build -p to-do-axum-server
 
-: > "$OUTPUT"
+: >"$OUTPUT"
 
 # Always stop the server, even when a step fails
 PID=""
 cleanup() {
   if [[ -n "$PID" ]]; then
-    xh --ignore-stdin DELETE "$BASE/delete/$WRITING" &>/dev/null || true
-    xh --ignore-stdin DELETE "$BASE/delete/$CODING" &>/dev/null || true
+    xh --ignore-stdin DELETE "$BASE/delete/$WRITING" token:"$TOKEN" &>/dev/null || true
+    xh --ignore-stdin DELETE "$BASE/delete/$CODING" token:"$TOKEN" &>/dev/null || true
     kill "$PID" 2>/dev/null || true
     wait "$PID" 2>/dev/null || true
   fi
@@ -39,26 +40,27 @@ echo "Server started with PID: $PID"
 
 # Wait until the server answers instead of a blind sleep
 for _ in {1..30}; do
-  xh --ignore-stdin --check-status GET "$BASE/get/all" &>/dev/null && break
+  xh --ignore-stdin --check-status GET "$BASE/get/" token:"$TOKEN" &>/dev/null && break
   sleep 0.2
 done
 
 # Run one request, log its JSON body to $OUTPUT, fail on non-2xx
 step() {
-  local label=$1; shift
+  local label=$1
+  shift
   echo "$label"
-  echo "### $label" >> "$OUTPUT"
-  xh --ignore-stdin --check-status "$@" | jq . >> "$OUTPUT"
+  echo "### $label" >>"$OUTPUT"
+  xh --ignore-stdin --check-status "$@" token:"$TOKEN" | jq . >>"$OUTPUT"
 }
 
 step "create writing" POST "$BASE/create" name="$WRITING" status=PENDING
-step "create coding"  POST "$BASE/create" name="$CODING" status=PENDING
-step "get all"        GET  "$BASE/get/all"
-step "get by name"    GET  "$BASE/get/$WRITING"
-step "delete coding"  DELETE "$BASE/delete/$CODING"
+step "create coding" POST "$BASE/create" name="$CODING" status=PENDING
+step "get all" GET "$BASE/get"
+step "get by name" GET "$BASE/get/$WRITING"
+step "delete coding" DELETE "$BASE/delete/$CODING"
 
 # update requires the `token` header (HeaderToken extractor)
-step "update writing" PATCH "$BASE/update" token:some-token name="$WRITING" status=DONE
+step "update writing" PATCH "$BASE/update" name="$WRITING" status=DONE
 
 # update without a token must be rejected with 401
 echo "update without token (expect 401)"
@@ -68,9 +70,12 @@ if xh --ignore-stdin --check-status PATCH "$BASE/update" name="$WRITING" status=
 fi
 
 # Final state: "writing" is done, nothing is pending
-xh --ignore-stdin GET "$BASE/get/all" \
-  | jq -e --arg writing "$WRITING" \
-    'any(.done[]; .name == $writing and .status == "DONE") and all(.pending[]; .name != $writing)' >/dev/null \
-  || { echo "FAIL: unexpected final state" >&2; exit 1; }
+xh --ignore-stdin GET "$BASE/get" token:"$TOKEN" |
+  jq -e --arg writing "$WRITING" \
+    'any(.done[]; .name == $writing and .status == "DONE") and all(.pending[]; .name != $writing)' >/dev/null ||
+  {
+    echo "FAIL: unexpected final state" >&2
+    exit 1
+  }
 
 echo "OK, details in $OUTPUT"

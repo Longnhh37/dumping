@@ -1,34 +1,42 @@
-use auth_dal::users::transactions::get::GetByEmail;
+use auth_dal::users::{schema::User, transactions::get::GetByEmail};
 use glue::{
-    errors::{NanoServiceError, NanoServiceErrorStatus},
+    errors::{NanoServiceError, NanoServiceErrorStatus, ResultExt},
     token::HeaderToken,
 };
 
+fn invalid_credentials() -> NanoServiceError {
+    NanoServiceError::new(
+        "invalid email or password",
+        NanoServiceErrorStatus::Unauthorized,
+    )
+}
+
 pub async fn login<T: GetByEmail>(
     store: &T,
-    email: String,
+    email: &str,
     password: String,
 ) -> Result<String, NanoServiceError> {
-    let user = store.get_by_email(email).await.map_err(|error| {
-        if error.status == NanoServiceErrorStatus::NotFound {
-            NanoServiceError::new(
-                "invalid email or password",
-                NanoServiceErrorStatus::Unauthorized,
-            )
-        } else {
-            error
+    let user = match store.get_by_email(email).await {
+        Ok(user) => user,
+        Err(e) if e.status == NanoServiceErrorStatus::NotFound => {
+            tokio::task::spawn_blocking(move || User::verify_dummy_password(&password))
+                .await
+                .eject(NanoServiceErrorStatus::Unknown)?;
+            return Err(invalid_credentials());
         }
-    })?;
+        Err(e) => return Err(e),
+    };
 
-    if !user.verify_password(password)? {
-        return Err(NanoServiceError::new(
-            "invalid email or password",
-            NanoServiceErrorStatus::Unauthorized,
-        ));
+    let (verified, unique_id) = tokio::task::spawn_blocking(move || {
+        user.verify_password(&password)
+            .map(|ok| (ok, user.unique_id))
+    })
+    .await
+    .eject(NanoServiceErrorStatus::Unknown)??;
+
+    if !verified {
+        return Err(invalid_credentials());
     }
 
-    HeaderToken {
-        unique_id: user.unique_id,
-    }
-    .encode()
+    HeaderToken { unique_id }.encode()
 }

@@ -1,3 +1,5 @@
+use std::sync::OnceLock;
+
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use serde::{Deserialize, Serialize};
 
@@ -6,7 +8,7 @@ use glue::errors::{NanoServiceError, NanoServiceErrorStatus};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NewUser {
     pub email: String,
-    pub password: String,
+    pub password_hash: String,
     pub unique_id: String,
 }
 
@@ -27,34 +29,46 @@ impl NewUser {
 
         Ok(Self {
             email,
-            password: hashed_password,
+            password_hash: hashed_password,
             unique_id,
         })
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, sqlx::FromRow)]
+#[derive(Deserialize, Debug, Clone, PartialEq, sqlx::FromRow)]
 pub struct User {
     pub id: i32,
     pub email: String,
-    pub password: String,
+    #[sqlx(rename = "password")]
+    pub password_hash: String,
     pub unique_id: String,
 }
 
 impl User {
-    pub fn verify_password(&self, password: String) -> Result<bool, NanoServiceError> {
-        let argon2_hasher = Argon2::default();
-        let parsed_hash = PasswordHash::new(&self.password).map_err(|e| {
+    // Burns the same CPU as a real verification so unknown emails are not faster.
+    pub fn verify_dummy_password(password: &str) {
+        static DUMMY: OnceLock<String> = OnceLock::new();
+        let hash = DUMMY.get_or_init(|| {
+            Argon2::default()
+                .hash_password(b"dummy-password")
+                .map(|h| h.to_string())
+                .unwrap_or_default()
+        });
+        if let Ok(parsed) = PasswordHash::new(hash) {
+            let _ = Argon2::default().verify_password(password.as_bytes(), &parsed);
+        }
+    }
+
+    pub fn verify_password(&self, password: &str) -> Result<bool, NanoServiceError> {
+        let parsed = PasswordHash::new(&self.password_hash).map_err(|e| {
             NanoServiceError::new(
                 format!("Failed to parse password hash: {e}"),
                 NanoServiceErrorStatus::Unknown,
             )
         })?;
-        let is_valid = argon2_hasher
-            .verify_password(password.as_bytes(), &parsed_hash)
-            .is_ok();
-
-        Ok(is_valid)
+        Ok(Argon2::default()
+            .verify_password(password.as_bytes(), &parsed)
+            .is_ok())
     }
 }
 

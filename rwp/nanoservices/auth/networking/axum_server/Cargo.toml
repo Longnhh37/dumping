@@ -1,13 +1,13 @@
 [package]
 name = "auth-axum-server"
 version = "0.1.0"
-edition = "2024"
+edition.workspace = true
 
 [dependencies]
 axum.workspace = true
 tokio.workspace = true
 dotenvy.workspace = true
-base64 = "0.23.1"
+base64.workspace = true
 auth-core = { path = "../../core/" }
 auth-dal = { path = "../../dal/" }
 glue = { path = "../../../../glue/", features = ["axum"] }

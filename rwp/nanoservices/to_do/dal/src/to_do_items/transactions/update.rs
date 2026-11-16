@@ -2,18 +2,11 @@ use std::future::Future;
 
 use crate::to_do_items::schema::ToDoItem;
 use glue::errors::NanoServiceError;
+use glue::db::db_error;
 
-#[cfg(feature = "json-file")]
-use {
-    super::super::descriptors::JsonFileDescriptor,
-    crate::json_file::{get_all, save_all},
-    std::collections::HashMap,
-};
 
 #[cfg(feature = "sqlx-postgres")]
 use super::super::descriptors::SqlxPostgresDescriptor;
-
-#[cfg(any(feature = "json-file", feature = "sqlx-postgres"))]
 use glue::errors::NanoServiceErrorStatus;
 
 pub trait UpdateOne {
@@ -31,30 +24,13 @@ impl UpdateOne for SqlxPostgresDescriptor {
         UPDATE to_do_items
         SET status = $2
         WHERE name = $1
-        RETURNING *",
+        RETURNING name, status",
         )
         .bind(item.name)
         .bind(item.status.to_string())
         .fetch_optional(&self.pool)
         .await
-        .map_err(|e| NanoServiceError::new(e.to_string(), NanoServiceErrorStatus::Unknown))?
+        .map_err(db_error)?
         .ok_or_else(|| NanoServiceError::new("Item not found", NanoServiceErrorStatus::NotFound))
-    }
-}
-
-#[cfg(feature = "json-file")]
-impl UpdateOne for JsonFileDescriptor {
-    async fn update_one(&self, item: ToDoItem) -> Result<ToDoItem, NanoServiceError> {
-        let mut tasks = get_all::<ToDoItem>().unwrap_or_else(|_| HashMap::new());
-        if !tasks.contains_key(&item.name) {
-            return Err(NanoServiceError::new(
-                format!("Item with name {} not found", item.name),
-                NanoServiceErrorStatus::NotFound,
-            ));
-        }
-        tasks.insert(item.name.clone(), item.clone());
-        save_all(&tasks)?;
-
-        Ok(item)
     }
 }

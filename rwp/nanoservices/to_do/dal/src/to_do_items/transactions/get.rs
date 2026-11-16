@@ -2,17 +2,10 @@ use std::future::Future;
 
 use crate::to_do_items::schema::ToDoItem;
 use glue::errors::NanoServiceError;
-
-#[cfg(feature = "json-file")]
-use {
-    super::super::descriptors::JsonFileDescriptor, crate::json_file::get_all,
-    std::collections::HashMap,
-};
+use glue::db::db_error;
 
 #[cfg(feature = "sqlx-postgres")]
 use super::super::descriptors::SqlxPostgresDescriptor;
-
-#[cfg(any(feature = "json-file", feature = "sqlx-postgres"))]
 use glue::errors::NanoServiceErrorStatus;
 
 pub trait GetAll {
@@ -22,27 +15,18 @@ pub trait GetAll {
 pub trait GetByName {
     fn get_by_name(
         &self,
-        name: String,
+        name: &str,
     ) -> impl Future<Output = Result<ToDoItem, NanoServiceError>> + Send;
 }
 
 #[cfg(feature = "sqlx-postgres")]
 impl GetAll for SqlxPostgresDescriptor {
     async fn get_all(&self) -> Result<Vec<ToDoItem>, NanoServiceError> {
-        let items = sqlx::query_as::<_, ToDoItem>("SELECT * FROM to_do_items")
-            .fetch_all(&self.pool)
-            .await
-            .map_err(|e| NanoServiceError::new(e.to_string(), NanoServiceErrorStatus::Unknown))?;
-
-        Ok(items)
-    }
-}
-
-#[cfg(feature = "json-file")]
-impl GetAll for JsonFileDescriptor {
-    async fn get_all(&self) -> Result<Vec<ToDoItem>, NanoServiceError> {
-        let tasks = get_all::<ToDoItem>().unwrap_or_else(|_| HashMap::new());
-        let items = tasks.values().cloned().collect();
+        let items =
+            sqlx::query_as::<_, ToDoItem>("SELECT name, status FROM to_do_items ORDER BY name")
+                .fetch_all(&self.pool)
+                .await
+                .map_err(db_error)?;
 
         Ok(items)
     }
@@ -50,24 +34,14 @@ impl GetAll for JsonFileDescriptor {
 
 #[cfg(feature = "sqlx-postgres")]
 impl GetByName for SqlxPostgresDescriptor {
-    async fn get_by_name(&self, name: String) -> Result<ToDoItem, NanoServiceError> {
-        sqlx::query_as::<_, ToDoItem>("SELECT * FROM to_do_items WHERE name = $1")
+    async fn get_by_name(&self, name: &str) -> Result<ToDoItem, NanoServiceError> {
+        sqlx::query_as::<_, ToDoItem>("SELECT name, status FROM to_do_items WHERE name = $1")
             .bind(name)
             .fetch_optional(&self.pool)
             .await
-            .map_err(|e| NanoServiceError::new(e.to_string(), NanoServiceErrorStatus::Unknown))?
+            .map_err(db_error)?
             .ok_or_else(|| {
                 NanoServiceError::new("Item not found", NanoServiceErrorStatus::NotFound)
             })
-    }
-}
-
-#[cfg(feature = "json-file")]
-impl GetByName for JsonFileDescriptor {
-    async fn get_by_name(&self, name: String) -> Result<ToDoItem, NanoServiceError> {
-        let tasks = get_all::<ToDoItem>()?;
-        tasks.get(&name).cloned().ok_or_else(|| {
-            NanoServiceError::new("Item not found", NanoServiceErrorStatus::NotFound)
-        })
     }
 }

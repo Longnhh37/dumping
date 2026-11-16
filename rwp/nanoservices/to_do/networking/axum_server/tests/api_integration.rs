@@ -8,11 +8,14 @@ use axum::{
     body::{Body, to_bytes},
     http::{Method, Request, Response, StatusCode},
 };
-use glue::errors::{NanoServiceError, NanoServiceErrorStatus};
 use serde_json::{Value, json};
+use tower::ServiceExt;
+
+use glue::errors::{NanoServiceError, NanoServiceErrorStatus};
+use glue::token::HeaderToken;
 use to_do_axum_server::api::basic_actions::basic_actions_router;
 use to_do_dal::to_do_items::{
-    schema::{NewToDoItem, ToDoItem},
+    schema::ToDoItem,
     transactions::{
         create::SaveOne,
         delete::DeleteOne,
@@ -20,7 +23,18 @@ use to_do_dal::to_do_items::{
         update::UpdateOne,
     },
 };
-use tower::ServiceExt;
+
+fn auth_token() -> String {
+    static INIT: std::sync::Once = std::sync::Once::new();
+    INIT.call_once(|| {
+        unsafe { std::env::set_var("JWT_SECRET", "test-secret") };
+    });
+    HeaderToken {
+        unique_id: "test-user".into(),
+    }
+    .encode()
+    .unwrap()
+}
 
 #[derive(Clone, Default)]
 struct MemoryStore(Arc<Mutex<HashMap<String, ToDoItem>>>);
@@ -32,19 +46,15 @@ impl GetAll for MemoryStore {
 }
 
 impl GetByName for MemoryStore {
-    async fn get_by_name(&self, name: String) -> Result<ToDoItem, NanoServiceError> {
-        self.0.lock().unwrap().get(&name).cloned().ok_or_else(|| {
+    async fn get_by_name(&self, name: &str) -> Result<ToDoItem, NanoServiceError> {
+        self.0.lock().unwrap().get(name).cloned().ok_or_else(|| {
             NanoServiceError::new("Item not found", NanoServiceErrorStatus::NotFound)
         })
     }
 }
 
 impl SaveOne for MemoryStore {
-    async fn save_one(&self, item: NewToDoItem) -> Result<ToDoItem, NanoServiceError> {
-        let item = ToDoItem {
-            name: item.name,
-            status: item.status.to_string(),
-        };
+    async fn save_one(&self, item: ToDoItem) -> Result<ToDoItem, NanoServiceError> {
         self.0
             .lock()
             .unwrap()
@@ -54,8 +64,8 @@ impl SaveOne for MemoryStore {
 }
 
 impl DeleteOne for MemoryStore {
-    async fn delete_one(&self, name: String) -> Result<ToDoItem, NanoServiceError> {
-        self.0.lock().unwrap().remove(&name).ok_or_else(|| {
+    async fn delete_one(&self, name: &str) -> Result<ToDoItem, NanoServiceError> {
+        self.0.lock().unwrap().remove(name).ok_or_else(|| {
             NanoServiceError::new("Item not found", NanoServiceErrorStatus::NotFound)
         })
     }
@@ -105,13 +115,14 @@ async fn response_json(response: Response<Body>) -> Value {
 async fn api_routes_cover_item_lifecycle_and_auth() {
     let app = basic_actions_router(MemoryStore::default());
     let name = "api-wire-integration";
+    let token = auth_token();
 
     let created = send(
         &app,
         Method::POST,
         "/api/v1/create",
         Some(json!({"name": name, "status": "PENDING"})),
-        None,
+        Some(&token),
     )
     .await;
     assert_eq!(created.status(), StatusCode::CREATED);
@@ -124,13 +135,13 @@ async fn api_routes_cover_item_lifecycle_and_auth() {
         Method::GET,
         "/api/v1/get/api-wire-integration",
         None,
-        None,
+        Some(&token),
     )
     .await;
     assert_eq!(fetched.status(), StatusCode::OK);
     assert_eq!(response_json(fetched).await["name"], name);
 
-    let missing = send(&app, Method::GET, "/api/v1/get/missing", None, None).await;
+    let missing = send(&app, Method::GET, "/api/v1/get/missing", None, Some(&token)).await;
     assert_eq!(missing.status(), StatusCode::NOT_FOUND);
 
     let missing_update = send(
@@ -138,12 +149,19 @@ async fn api_routes_cover_item_lifecycle_and_auth() {
         Method::PATCH,
         "/api/v1/update",
         Some(json!({"name": "missing", "status": "DONE"})),
-        Some("integration-test-token"),
+        Some(&token),
     )
     .await;
     assert_eq!(missing_update.status(), StatusCode::NOT_FOUND);
 
-    let missing_delete = send(&app, Method::DELETE, "/api/v1/delete/missing", None, None).await;
+    let missing_delete = send(
+        &app,
+        Method::DELETE,
+        "/api/v1/delete/missing",
+        None,
+        Some(&token),
+    )
+    .await;
     assert_eq!(missing_delete.status(), StatusCode::NOT_FOUND);
 
     let unauthorized = send(
@@ -161,7 +179,7 @@ async fn api_routes_cover_item_lifecycle_and_auth() {
         Method::PATCH,
         "/api/v1/update",
         Some(json!({"name": name, "status": "DONE"})),
-        Some("integration-test-token"),
+        Some(&token),
     )
     .await;
     assert_eq!(updated.status(), StatusCode::OK);
@@ -172,7 +190,7 @@ async fn api_routes_cover_item_lifecycle_and_auth() {
         Method::DELETE,
         "/api/v1/delete/api-wire-integration",
         None,
-        None,
+        Some(&token),
     )
     .await;
     assert_eq!(deleted.status(), StatusCode::OK);

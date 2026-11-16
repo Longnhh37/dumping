@@ -1,15 +1,12 @@
 [package]
 name = "to-do-dal"
 version = "0.1.0"
-edition = "2024"
+edition.workspace = true
 
 [features]
-json-file = ["serde_json"]
-sqlx-postgres = ["sqlx"]
+sqlx-postgres = ["sqlx", "glue/sqlx"]
 
 [dependencies]
 sqlx = { workspace = true, optional = true }
-serde_json = { workspace = true, optional = true }
 serde.workspace = true
-
 glue = { path = "../../../glue" }

@@ -1,9 +1,10 @@
 [package]
 name = "auth-core"
 version = "0.1.0"
-edition = "2024"
+edition.workspace = true
 
 [dependencies]
 serde.workspace = true
+tokio.workspace = true
 auth-dal = { path = "../dal" }
 glue = { path = "../../../glue/" }

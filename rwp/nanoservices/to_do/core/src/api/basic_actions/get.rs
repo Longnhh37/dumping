@@ -6,14 +6,14 @@ use to_do_dal::to_do_items::{
 
 pub async fn get_all<T: GetAll>(store: &T) -> Result<AllTodoItems, NanoServiceError> {
     let all_items = store.get_all().await?;
-    AllTodoItems::from_vec(all_items)
+    Ok(AllTodoItems::from_vec(all_items))
 }
 
 pub async fn get_by_name<T: GetByName>(
     store: &T,
     name: &str,
 ) -> Result<ToDoItem, NanoServiceError> {
-    store.get_by_name(name.to_owned()).await
+    store.get_by_name(name).await
 }
 
 #[cfg(test)]
@@ -21,6 +21,7 @@ mod tests {
     use super::{get_all, get_by_name};
     use glue::errors::NanoServiceError;
     use to_do_dal::to_do_items::{
+        enums::TaskStatus,
         schema::ToDoItem,
         transactions::get::{GetAll, GetByName},
     };
@@ -32,21 +33,21 @@ mod tests {
             Ok(vec![
                 ToDoItem {
                     name: "pending-item".into(),
-                    status: "PENDING".into(),
+                    status: TaskStatus::Pending,
                 },
                 ToDoItem {
                     name: "done-item".into(),
-                    status: "DONE".into(),
+                    status: TaskStatus::Done,
                 },
             ])
         }
     }
 
     impl GetByName for TestStore {
-        async fn get_by_name(&self, name: String) -> Result<ToDoItem, NanoServiceError> {
+        async fn get_by_name(&self, name: &str) -> Result<ToDoItem, NanoServiceError> {
             Ok(ToDoItem {
-                name,
-                status: "DONE".into(),
+                name: name.to_string(),
+                status: TaskStatus::Done,
             })
         }
     }
@@ -62,6 +63,6 @@ mod tests {
     async fn get_by_name_forwards_the_name_to_the_store() {
         let item = get_by_name(&TestStore, "requested-name").await.unwrap();
         assert_eq!(item.name, "requested-name");
-        assert_eq!(item.status, "DONE");
+        assert_eq!(item.status, TaskStatus::Done);
     }
 }

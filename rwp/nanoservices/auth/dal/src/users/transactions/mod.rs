@@ -12,6 +12,5 @@ pub trait AuthStore: SaveOne + GetByEmail {}
 // impl<T> AuthStore for T
 // where
 //     T: SaveOne + GetByEmail + get::GetById + get::GetAll + update::UpdateOne + delete::DeleteOne,
-// {
-// }
+// {}
 impl<T> AuthStore for T where T: SaveOne + GetByEmail {}

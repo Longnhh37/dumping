@@ -3,8 +3,7 @@ import { getCall } from "./utils";
 import { Url } from "./url";
 
 export default async function getAll() {
-  let response = await getCall<ToDoItems>(new Url().getAll, 200);
-  return response;
+  return getCall<ToDoItems>(new Url().getAll, 200);
 }
 
 export async function getToDoItemByName(name: string) {

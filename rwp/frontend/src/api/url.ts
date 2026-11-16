@@ -8,7 +8,7 @@ export class Url {
   constructor() {
     this.baseUrl = Url.getBaseUrl();
     this.create = `${this.baseUrl}api/v1/create`;
-    this.getAll = `${this.baseUrl}api/v1/get/all`;
+    this.getAll = `${this.baseUrl}api/v1/get`;
     this.update = `${this.baseUrl}api/v1/update`;
     this.login = `${this.baseUrl}api/v1/auth/login`;
   }

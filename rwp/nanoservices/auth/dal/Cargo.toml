@@ -1,11 +1,11 @@
 [package]
 name = "auth-dal"
 version = "0.1.0"
-edition = "2024"
+edition.workspace = true
 
 [dependencies]
 serde.workspace = true
 sqlx.workspace = true
-argon2 = { version = "0.6.0", features = ["password-hash"] }
-uuid = { version = "1.29.2", features = ["serde", "v4"] }
-glue = { path = "../../../glue/" }
+argon2.workspace = true
+uuid.workspace = true
+glue = { path = "../../../glue/", features = ["sqlx"] }

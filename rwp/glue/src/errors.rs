@@ -78,6 +78,27 @@ impl<T, E: std::fmt::Display> ResultExt<T> for Result<T, E> {
     }
 }
 
+// ──────────────────── Framework integrations ────────────────────
+
+#[cfg(feature = "axum")]
+mod axum_impl {
+    use super::NanoServiceError;
+    use axum::{
+        Json,
+        http::StatusCode,
+        response::{IntoResponse, Response},
+    };
+
+    impl IntoResponse for NanoServiceError {
+        fn into_response(self) -> Response {
+            let status = StatusCode::from_u16(self.status.http_status_code())
+                .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+
+            (status, Json(self.to_string())).into_response()
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{NanoServiceErrorStatus, ResultExt};
@@ -98,26 +119,5 @@ mod tests {
 
         assert_eq!(error.message, "loading items: storage offline");
         assert_eq!(error.status, NanoServiceErrorStatus::Unknown);
-    }
-}
-
-// ──────────────────── Framework integrations ────────────────────
-
-#[cfg(feature = "axum")]
-mod axum_impl {
-    use super::NanoServiceError;
-    use axum::{
-        Json,
-        http::StatusCode,
-        response::{IntoResponse, Response},
-    };
-
-    impl IntoResponse for NanoServiceError {
-        fn into_response(self) -> Response {
-            let status = StatusCode::from_u16(self.status.http_status_code())
-                .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
-
-            (status, Json(self.to_string())).into_response()
-        }
     }
 }

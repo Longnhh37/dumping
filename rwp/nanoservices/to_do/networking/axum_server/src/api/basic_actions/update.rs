@@ -6,12 +6,14 @@ use to_do_dal::to_do_items::{
     schema::ToDoItem, transactions::get::GetAll, transactions::update::UpdateOne,
 };
 
+use crate::api::AppState;
+
 pub async fn update<T: UpdateOne + GetAll>(
-    State(store): State<T>,
+    State(state): State<AppState<T>>,
     _token: HeaderToken,
     Json(body): Json<ToDoItem>,
 ) -> Result<impl IntoResponse, NanoServiceError> {
-    update_core(&store, body).await?;
-    let all_items = get_all_core(&store).await?;
+    update_core(&state.store, body).await?;
+    let all_items = get_all_core(&state.store).await?;
     Ok((StatusCode::OK, Json(all_items)))
 }

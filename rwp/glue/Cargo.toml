@@ -1,13 +1,16 @@
 [package]
 name = "glue"
 version = "0.1.0"
-edition = "2024"
+edition.workspace = true
 
 [dependencies]
 serde.workspace = true
 axum = { workspace = true, optional = true }
-thiserror = "2"
-jsonwebtoken = "9.3.0"
+sqlx = { workspace = true, optional = true }
+tracing.workspace = true
+thiserror.workspace = true
+jsonwebtoken.workspace = true
 
 [features]
 axum = ["dep:axum"]
+sqlx = ["dep:sqlx"]

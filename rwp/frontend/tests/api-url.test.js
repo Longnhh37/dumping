@@ -13,7 +13,7 @@ describe("frontend API URLs", () => {
   test("targets the ingress API for create, list, and update", () => {
     const urls = new Url();
     expect(urls.create).toBe("http://localhost:8001/api/v1/create");
-    expect(urls.getAll).toBe("http://localhost:8001/api/v1/get/all");
+    expect(urls.getAll).toBe("http://localhost:8001/api/v1/get");
     expect(urls.update).toBe("http://localhost:8001/api/v1/update");
   });
 
@@ -32,6 +32,6 @@ describe("frontend API URLs", () => {
       configurable: true,
       value: { location: { origin: "https://todo.example" } },
     });
-    expect(new Url().getAll).toBe("https://todo.example/api/v1/get/all");
+    expect(new Url().getAll).toBe("https://todo.example/api/v1/get");
   });
 });

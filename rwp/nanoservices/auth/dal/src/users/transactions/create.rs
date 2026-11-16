@@ -4,7 +4,8 @@ use crate::{
     users::descriptors::SqlxPostgresDescriptor,
     users::schema::{NewUser, User},
 };
-use glue::errors::{NanoServiceError, NanoServiceErrorStatus};
+use glue::db::db_error;
+use glue::errors::NanoServiceError;
 
 pub trait SaveOne {
     fn save_one(
@@ -19,14 +20,14 @@ impl SaveOne for SqlxPostgresDescriptor {
             "
         INSERT INTO users (email, password, unique_id)
         VALUES ($1, $2, $3)
-        RETURNING *",
+        RETURNING id, email, password, unique_id",
         )
         .bind(user.email)
-        .bind(user.password.to_string())
+        .bind(user.password_hash)
         .bind(user.unique_id)
         .fetch_one(&self.pool)
         .await
-        .map_err(|e| NanoServiceError::new(e.to_string(), NanoServiceErrorStatus::Unknown))?;
+        .map_err(db_error)?;
 
         Ok(user)
     }

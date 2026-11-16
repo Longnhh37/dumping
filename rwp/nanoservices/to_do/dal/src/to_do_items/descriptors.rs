@@ -10,6 +10,3 @@ impl SqlxPostgresDescriptor {
         Self { pool }
     }
 }
-
-#[cfg(feature = "json-file")]
-pub struct JsonFileDescriptor;

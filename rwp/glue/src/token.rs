@@ -1,7 +1,17 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 
-use crate::errors::{NanoServiceError, NanoServiceErrorStatus};
+use crate::errors::{NanoServiceError, NanoServiceErrorStatus, ResultExt};
+
+const TOKEN_TTL_SECS: u64 = 24 * 60 * 60;
+
+#[derive(Serialize, Deserialize)]
+struct Claims {
+    unique_id: String,
+    exp: u64,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HeaderToken {
@@ -10,31 +20,31 @@ pub struct HeaderToken {
 
 impl HeaderToken {
     pub fn get_key() -> Result<String, NanoServiceError> {
-        std::env::var("JWT_SECRET").map_err(|err| {
-            NanoServiceError::new(err.to_string(), NanoServiceErrorStatus::Unauthorized)
-        })
+        std::env::var("JWT_SECRET").eject(NanoServiceErrorStatus::Unknown)
     }
 
     pub fn encode(self) -> Result<String, NanoServiceError> {
-        let key_str = Self::get_key()?;
-        let key = EncodingKey::from_secret(key_str.as_ref());
-        jsonwebtoken::encode(&Header::default(), &self, &key).map_err(|err| {
-            NanoServiceError::new(err.to_string(), NanoServiceErrorStatus::Unauthorized)
-        })
+        let key = EncodingKey::from_secret(Self::get_key()?.as_bytes());
+        let exp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .eject(NanoServiceErrorStatus::Unknown)?
+            .as_secs()
+            + TOKEN_TTL_SECS;
+        let claims = Claims {
+            unique_id: self.unique_id,
+            exp,
+        };
+        jsonwebtoken::encode(&Header::default(), &claims, &key)
+            .eject(NanoServiceErrorStatus::Unknown)
     }
 
     pub fn decode(token: &str) -> Result<Self, NanoServiceError> {
-        let key_str = Self::get_key()?;
-        let key = DecodingKey::from_secret(key_str.as_ref());
-
-        let mut validation = Validation::new(Algorithm::HS256);
-        validation.required_spec_claims.remove("exp");
-
-        jsonwebtoken::decode(token, &key, &validation)
-            .map(|ok| ok.claims)
-            .map_err(|err| {
-                NanoServiceError::new(err.to_string(), NanoServiceErrorStatus::Unauthorized)
+        let key = DecodingKey::from_secret(Self::get_key()?.as_bytes());
+        jsonwebtoken::decode::<Claims>(token, &key, &Validation::new(Algorithm::HS256))
+            .map(|data| HeaderToken {
+                unique_id: data.claims.unique_id,
             })
+            .eject(NanoServiceErrorStatus::Unauthorized)
     }
 }
 

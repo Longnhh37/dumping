@@ -8,11 +8,10 @@ export const login = async (
   const authToken = btoa(`${email}:${password}`);
   try {
     const response = await axios({
-      method: "get",
+      method: "post",
       url: new Url().login,
       headers: {
         Authorization: `Basic ${authToken}`,
-        "Content-Type": "application.json",
       },
     });
     return response.data;

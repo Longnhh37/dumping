@@ -1,7 +1,7 @@
 [package]
 name = "ingress"
 version = "0.1.0"
-edition = "2024"
+edition.workspace = true
 
 [dependencies]
 auth_server = { path = "../nanoservices/auth/networking/axum_server/", package = "auth-axum-server" }
@@ -16,6 +16,7 @@ to-do-dal = { path = "../nanoservices/to_do/dal/", features = [
   "sqlx-postgres",
 ] }
 to-do-axum-server = { path = "../nanoservices/to_do/networking/axum_server/" }
+glue = { path = "../glue", features = ["sqlx"] }
 
 [dev-dependencies]
 tower.workspace = true

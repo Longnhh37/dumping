@@ -28,6 +28,13 @@ const App = () => {
     setLoggedin(true);
   }
 
+  function handleUnauthorized() {
+    localStorage.removeItem("token");
+    setData(null);
+    setError(null);
+    setLoggedin(false);
+  }
+
   // Effect 1: initialize WASM once, independent of login state
   useEffect(() => {
     let cancelled = false;
@@ -63,6 +70,10 @@ const App = () => {
         if (cancelled) return;
 
         if ("error" in response) {
+          if (response.status === 401) {
+            handleUnauthorized();
+            return;
+          }
           setError(response.error);
           return;
         }
@@ -85,6 +96,10 @@ const App = () => {
 
   function reRenderItems(response: ApiResult<ToDoItems>) {
     if ("error" in response) {
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
       setError(response.error);
       return;
     }
