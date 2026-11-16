@@ -7,6 +7,7 @@ import type { ApiResult } from "./api/utils";
 
 import { CreateToDoItem } from "./components/CreateItemForm";
 import { ToDoItem } from "./components/ToDoItem";
+import { LoginForm } from "./components/LoginForm";
 
 import init, {
   rust_generate_button_text,
@@ -18,20 +19,47 @@ const App = () => {
   const [data, setData] = useState<ToDoItems | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [wasmReady, setWasmReady] = useState(false);
+  const [loggedin, setLoggedin] = useState<boolean>(
+    localStorage.getItem("token") !== null,
+  );
 
+  function setToken(token: string) {
+    localStorage.setItem("token", token);
+    setLoggedin(true);
+  }
+
+  // Effect 1: initialize WASM once, independent of login state
   useEffect(() => {
     let cancelled = false;
 
-    const initialize = async () => {
+    const initWasm = async () => {
       try {
         await init();
-
         if (cancelled) return;
-
         setWasmReady(true);
+      } catch (e) {
+        if (cancelled) return;
+        console.error("Application initialization error:", e);
+        setError("Failed to initialize application");
+      }
+    };
 
+    initWasm();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Effect 2: fetch data only when WASM is ready AND the user is logged in
+  useEffect(() => {
+    if (!wasmReady || !loggedin) return;
+
+    let cancelled = false;
+
+    const fetchData = async () => {
+      try {
         const response = await getAll();
-
         if (cancelled) return;
 
         if ("error" in response) {
@@ -43,18 +71,17 @@ const App = () => {
         setError(null);
       } catch (e) {
         if (cancelled) return;
-
-        console.error("Application initialization error:", e);
-        setError("Failed to initialize application");
+        console.error("Fetch error: ", e);
+        setError("Failed to fetch data");
       }
     };
 
-    initialize();
+    fetchData();
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [wasmReady, loggedin]);
 
   function reRenderItems(response: ApiResult<ToDoItems>) {
     if ("error" in response) {
@@ -64,6 +91,10 @@ const App = () => {
 
     setData(response.data);
     setError(null);
+  }
+
+  if (!loggedin) {
+    return <LoginForm setToken={setToken} />;
   }
 
   if (error) {

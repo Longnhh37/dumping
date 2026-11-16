@@ -10,40 +10,26 @@ pub struct Credentials {
 }
 
 pub fn extract_credentials<B>(req: &Request<B>) -> Result<Credentials, NanoServiceError> {
-    let header_value = req.headers().get(header::AUTHORIZATION).ok_or_else(|| {
-        NanoServiceError::new(
-            "No credentials provided",
-            NanoServiceErrorStatus::Unauthorized,
-        )
-    })?;
-
-    let encoded = header_value.to_str().map_err(|_| {
+    let invalid = || {
         NanoServiceError::new("Invalid credentials", NanoServiceErrorStatus::Unauthorized)
+    };
+
+    let header_value = req.headers().get(header::AUTHORIZATION).ok_or_else(|| {
+        NanoServiceError::new("No credentials provided", NanoServiceErrorStatus::Unauthorized)
     })?;
 
-    if !encoded.starts_with("Basic ") {
-        return Err(NanoServiceError::new(
-            "Invalid credentials",
-            NanoServiceErrorStatus::Unauthorized,
-        ));
-    }
+    let encoded = header_value.to_str().map_err(|_| invalid())?;
+    let base64_credentials = encoded.strip_prefix("Basic ").ok_or_else(invalid)?;
 
-    let base64_credentials = &encoded[6..];
     let decoded = general_purpose::STANDARD
         .decode(base64_credentials)
-        .map_err(|e| NanoServiceError::new(e.to_string(), NanoServiceErrorStatus::Unauthorized))?;
-    let credentials = String::from_utf8(decoded)
-        .map_err(|e| NanoServiceError::new(e.to_string(), NanoServiceErrorStatus::Unauthorized))?;
+        .map_err(|_| invalid())?;
+    let credentials = String::from_utf8(decoded).map_err(|_| invalid())?;
 
-    let mut split = credentials.splitn(2, ':');
-    match (split.next(), split.next()) {
-        (Some(email), Some(password)) => Ok(Credentials {
-            email: email.to_owned(),
-            password: password.to_owned(),
-        }),
-        _ => Err(NanoServiceError::new(
-            "Invalid credentials",
-            NanoServiceErrorStatus::Unauthorized,
-        )),
-    }
+    let (email, password) = credentials.split_once(':').ok_or_else(invalid)?;
+
+    Ok(Credentials {
+        email: email.to_owned(),
+        password: password.to_owned(),
+    })
 }
