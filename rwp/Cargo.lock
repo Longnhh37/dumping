@@ -2223,6 +2223,7 @@ dependencies = [
 name = "to-do-core"
 version = "0.1.0"
 dependencies = [
+ "auth-kernel",
  "glue",
  "to-do-dal",
  "tokio",

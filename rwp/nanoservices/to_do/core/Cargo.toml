@@ -5,7 +5,12 @@ edition.workspace = true
 
 [dependencies]
 to-do-dal = { path = "../dal" }
+auth-kernel = { path = "../../auth/kernel/" }
 glue = { path = "../../../glue" }
 
 [dev-dependencies]
 tokio.workspace = true
+
+[features]
+memory = ["auth-kernel/core-postgres"]
+http = ["auth-kernel/http"]

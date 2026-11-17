@@ -10,5 +10,5 @@ glue = { path = "../../../glue/" }
 reqwest = { version = "0.13.5", optional = true, features = ["json"] }
 
 [features]
-http = ["reqwest"]
-core-postgres = ["auth-core"]
+http = ["reqwest", "auth-dal"]
+core-postgres = ["auth-core", "auth-dal"]
