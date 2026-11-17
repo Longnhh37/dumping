@@ -28,3 +28,26 @@ impl GetByEmail for SqlxPostgresDescriptor {
         })
     }
 }
+
+pub trait GetByUniqueId {
+    fn get_by_unique_id(
+        &self,
+        id: &str,
+    ) -> impl Future<Output = Result<User, NanoServiceError>> + Send;
+}
+
+impl GetByUniqueId for SqlxPostgresDescriptor {
+    async fn get_by_unique_id(&self, id: &str) -> Result<User, NanoServiceError> {
+        let item = sqlx::query_as::<_, User>(
+            "SELECT id, email, password, unique_id FROM users WHERE unique_id = $1",
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(db_error)?;
+
+        item.ok_or_else(|| {
+            NanoServiceError::new("unique id not found", NanoServiceErrorStatus::NotFound)
+        })
+    }
+}
