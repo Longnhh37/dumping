@@ -32,9 +32,16 @@ impl AllTodoItems {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "sqlx-postgres", derive(sqlx::FromRow))]
+pub struct UserConnection {
+    pub user_id: i32,
+    pub to_do_id: i32,
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{AllTodoItems, ToDoItem, TaskStatus};
+    use super::{AllTodoItems, TaskStatus, ToDoItem};
 
     #[test]
     fn groups_items_by_status_without_losing_names() {
