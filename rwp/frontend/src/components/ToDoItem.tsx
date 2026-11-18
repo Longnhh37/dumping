@@ -8,14 +8,16 @@ import { TaskStatus } from "../interfaces/toDoItems";
 import type { ToDoItems } from "../interfaces/toDoItems";
 
 interface ToDoItemProps {
-  name: string;
+  id: number;
+  title: string;
   status: TaskStatus;
   passBackResponse: (response: ApiResult<ToDoItems>) => void;
   buttonMessage: string;
 }
 
 export const ToDoItem: FC<ToDoItemProps> = ({
-  name,
+  id,
+  title,
   status,
   passBackResponse,
   buttonMessage,
@@ -31,20 +33,20 @@ export const ToDoItem: FC<ToDoItemProps> = ({
 
     try {
       const response = isPending
-        ? await updateToDoItemCall(name, TaskStatus.DONE)
-        : await deleteToDoItemCall(name);
+        ? await updateToDoItemCall(id, title, TaskStatus.DONE)
+        : await deleteToDoItemCall(id);
 
       passBackResponse(response);
     } catch (e) {
-      console.error(`Failed to process task ${name}:`, e);
+      console.error(`Failed to process task ${id}:`, e);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="itemContainer" data-name={name}>
-      <p>{name}</p>
+    <div className="itemContainer" data-id={id}>
+      <p>{title}</p>
 
       <button className="actionButton" onClick={sendRequest} disabled={loading}>
         {loading ? "Processing..." : buttonMessage}

@@ -21,11 +21,11 @@ export class Url {
     return `${origin}/`;
   }
 
-  deleteUrl(name: string): string {
-    return `${this.baseUrl}api/v1/delete/${encodeURIComponent(name)}`;
+  deleteUrl(id: number): string {
+    return `${this.baseUrl}api/v1/delete/${id}`;
   }
 
-  getByNameUrl(name: string): string {
-    return `${this.baseUrl}api/v1/get/${encodeURIComponent(name)}`;
+  getByIdUrl(id: number): string {
+    return `${this.baseUrl}api/v1/get/${id}`;
   }
 }

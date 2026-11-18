@@ -7,7 +7,10 @@ pub async fn run_migrations(pool: &PgPool) -> Result<(), NanoServiceError> {
 
     let mut migrations = sqlx::migrate!("./migrations");
     migrations.set_ignore_missing(true);
-    migrations.run(pool).await.eject(NanoServiceErrorStatus::Unknown)?;
+    migrations
+        .run(pool)
+        .await
+        .eject(NanoServiceErrorStatus::Unknown)?;
 
     println!("to-do database migrations completed");
     Ok(())

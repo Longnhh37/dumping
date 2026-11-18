@@ -11,11 +11,15 @@ use to_do_dal::to_do_items::transactions::{delete::DeleteOne, get::GetAll};
 
 use crate::api::AppState;
 
-pub async fn delete_by_name<T: DeleteOne + GetAll>(
+pub async fn delete_by_id<T: DeleteOne + GetAll>(
     State(state): State<AppState<T>>,
-    _token: HeaderToken,
-    Path(name): Path<String>,
+    token: HeaderToken,
+    Path(id): Path<i32>,
 ) -> Result<impl IntoResponse, NanoServiceError> {
-    delete_core(&state.store, &name).await?;
-    Ok((StatusCode::OK, Json(get_all_core(&state.store).await?)).into_response())
+    delete_core(&state.store, id, &token.unique_id).await?;
+    Ok((
+        StatusCode::OK,
+        Json(get_all_core(&state.store, &token.unique_id).await?),
+    )
+        .into_response())
 }

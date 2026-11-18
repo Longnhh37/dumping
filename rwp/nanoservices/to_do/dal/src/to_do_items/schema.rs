@@ -5,8 +5,15 @@ use super::enums::TaskStatus;
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "sqlx-postgres", derive(sqlx::FromRow))]
 pub struct ToDoItem {
-    pub name: String,
+    pub id: i32,
+    pub title: String,
     #[cfg_attr(feature = "sqlx-postgres", sqlx(try_from = "String"))]
+    pub status: TaskStatus,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct NewToDoItem {
+    pub title: String,
     pub status: TaskStatus,
 }
 
@@ -35,7 +42,7 @@ impl AllTodoItems {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[cfg_attr(feature = "sqlx-postgres", derive(sqlx::FromRow))]
 pub struct UserConnection {
-    pub user_id: i32,
+    pub user_id: String,
     pub to_do_id: i32,
 }
 
@@ -44,21 +51,25 @@ mod tests {
     use super::{AllTodoItems, TaskStatus, ToDoItem};
 
     #[test]
-    fn groups_items_by_status_without_losing_names() {
+    fn groups_items_by_status_without_losing_ids_and_titles() {
         let all = AllTodoItems::from_vec(vec![
             ToDoItem {
-                name: "write-tests".into(),
+                id: 1,
+                title: "write-tests".into(),
                 status: TaskStatus::Pending,
             },
             ToDoItem {
-                name: "wire-ingress".into(),
+                id: 2,
+                title: "wire-ingress".into(),
                 status: TaskStatus::Done,
             },
         ]);
 
         assert_eq!(all.pending.len(), 1);
-        assert_eq!(all.pending[0].name, "write-tests");
+        assert_eq!(all.pending[0].id, 1);
+        assert_eq!(all.pending[0].title, "write-tests");
         assert_eq!(all.done.len(), 1);
-        assert_eq!(all.done[0].name, "wire-ingress");
+        assert_eq!(all.done[0].id, 2);
+        assert_eq!(all.done[0].title, "wire-ingress");
     }
 }

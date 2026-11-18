@@ -44,14 +44,6 @@ impl fmt::Display for TaskStatus {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "sqlx-postgres", derive(sqlx::FromRow))]
-pub struct ToDoItem {
-    pub name: String,
-    #[cfg_attr(feature = "sqlx-postgres", sqlx(try_from = "String"))]
-    pub status: TaskStatus,
-}
-
 #[cfg(test)]
 mod tests {
     use super::TaskStatus;

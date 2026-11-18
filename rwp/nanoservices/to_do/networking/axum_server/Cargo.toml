@@ -10,7 +10,13 @@ dotenvy.workspace = true
 to-do-core = { path = "../../core" }
 glue = { path = "../../../../glue", features = ["axum"] }
 to-do-dal = { path = "../../dal/", features = ["sqlx-postgres"] }
+auth-kernel = { path = "../../../auth/kernel/" }
 
 [dev-dependencies]
 serde_json.workspace = true
 tower.workspace = true
+
+[features]
+auth-http = ["auth-kernel/http"]
+auth-core-postgres = ["auth-kernel/core-postgres"]
+default = ["auth-core-postgres"]

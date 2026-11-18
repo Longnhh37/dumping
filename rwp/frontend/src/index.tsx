@@ -133,8 +133,9 @@ const App = () => {
         <div>
           {data.pending.map((item) => (
             <ToDoItem
-              key={item.name}
-              name={item.name}
+              key={item.id}
+              id={item.id}
+              title={item.title}
               status={item.status}
               buttonMessage={rust_generate_button_text(item.status)}
               passBackResponse={reRenderItems}
@@ -147,8 +148,9 @@ const App = () => {
         <div>
           {data.done.map((item) => (
             <ToDoItem
-              key={item.name}
-              name={item.name}
+              key={item.id}
+              id={item.id}
+              title={item.title}
               status={item.status}
               buttonMessage={rust_generate_button_text(item.status)}
               passBackResponse={reRenderItems}

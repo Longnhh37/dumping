@@ -10,10 +10,10 @@ use crate::api::AppState;
 
 pub async fn update<T: UpdateOne + GetAll>(
     State(state): State<AppState<T>>,
-    _token: HeaderToken,
+    token: HeaderToken,
     Json(body): Json<ToDoItem>,
 ) -> Result<impl IntoResponse, NanoServiceError> {
-    update_core(&state.store, body).await?;
-    let all_items = get_all_core(&state.store).await?;
+    update_core(&state.store, body, &token.unique_id).await?;
+    let all_items = get_all_core(&state.store, &token.unique_id).await?;
     Ok((StatusCode::OK, Json(all_items)))
 }

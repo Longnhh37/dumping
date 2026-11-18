@@ -11,17 +11,17 @@ interface CreateToDoItemProps {
 export const CreateToDoItem: FC<CreateToDoItemProps> = ({
   passBackResponse,
 }) => {
-  const [name, setName] = useState<string>("");
+  const [title, setTitle] = useState<string>("");
 
-  const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
+  const handleTitleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value);
   };
 
   const createItem = async () => {
-    if (!name.trim()) return;
+    if (!title.trim()) return;
 
-    const response = await createToDoItemCall(name.trim());
-    setName("");
+    const response = await createToDoItemCall(title.trim());
+    setTitle("");
     passBackResponse(response);
   };
 
@@ -29,10 +29,10 @@ export const CreateToDoItem: FC<CreateToDoItemProps> = ({
     <div className="inputContainer">
       <input
         type="text"
-        id="name"
+        id="title"
         placeholder="create to do item"
-        value={name}
-        onChange={handleNameChange}
+        value={title}
+        onChange={handleTitleChange}
       />
       <button className="actionButton" id="create-button" onClick={createItem}>
         Create

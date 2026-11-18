@@ -3,11 +3,13 @@ import { patchCall } from "./utils";
 import { Url } from "./url";
 
 export async function updateToDoItemCall(
-  name: string,
+  id: number,
+  title: string,
   status: TaskStatus,
 ) {
   const toDoItem: ToDoItem = {
-    name,
+    id,
+    title,
     status,
   };
   return patchCall<ToDoItems, ToDoItem>(new Url().update, toDoItem, 200);

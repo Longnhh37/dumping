@@ -6,6 +6,6 @@ export default async function getAll() {
   return getCall<ToDoItems>(new Url().getAll, 200);
 }
 
-export async function getToDoItemByName(name: string) {
-  return getCall<ToDoItem>(new Url().getByNameUrl(name), 200);
+export async function getToDoItemById(id: number) {
+  return getCall<ToDoItem>(new Url().getByIdUrl(id), 200);
 }

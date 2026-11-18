@@ -17,14 +17,10 @@ describe("frontend API URLs", () => {
     expect(urls.update).toBe("http://localhost:8001/api/v1/update");
   });
 
-  test("encodes names in get and delete path segments", () => {
+  test("uses integer ids in get and delete path segments", () => {
     const urls = new Url();
-    expect(urls.getByNameUrl("write tests/now")).toBe(
-      "http://localhost:8001/api/v1/get/write%20tests%2Fnow",
-    );
-    expect(urls.deleteUrl("write tests/now")).toBe(
-      "http://localhost:8001/api/v1/delete/write%20tests%2Fnow",
-    );
+    expect(urls.getByIdUrl(42)).toBe("http://localhost:8001/api/v1/get/42");
+    expect(urls.deleteUrl(42)).toBe("http://localhost:8001/api/v1/delete/42");
   });
 
   test("uses the current origin outside the local frontend dev server", () => {

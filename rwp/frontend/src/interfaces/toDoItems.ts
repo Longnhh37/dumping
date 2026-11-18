@@ -4,12 +4,13 @@ export enum TaskStatus {
 }
 
 export interface NewToDoItem {
-  name: string,
+  title: string;
   status: TaskStatus,
 }
 
 export interface ToDoItem {
-  name: string;
+  id: number;
+  title: string;
   status: TaskStatus;
 }
 
