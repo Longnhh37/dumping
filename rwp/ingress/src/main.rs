@@ -81,7 +81,10 @@ fn app(todo_store: SqlxPostgresDescriptor, auth_store: AuthPostgresDescriptor) -
 
     Router::new()
         .route("/", get(index))
-        .merge(todo_api::basic_actions::basic_actions_router(todo_store))
+        .merge(todo_api::basic_actions::basic_actions_router(
+            todo_store,
+            auth_store.clone(),
+        ))
         .merge(auth_router(auth_server::api::AppState::new(auth_store)))
         .fallback(catch_all)
         .layer(cors)

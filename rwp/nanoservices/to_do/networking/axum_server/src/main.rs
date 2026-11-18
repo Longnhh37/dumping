@@ -4,6 +4,9 @@ use glue::db::pool_from_env;
 use to_do_axum_server::api;
 use to_do_dal::{migrations::run_migrations, to_do_items::descriptors::SqlxPostgresDescriptor};
 
+#[cfg(feature = "auth-core-postgres")]
+use auth_dal::users::descriptors::SqlxPostgresDescriptor as AuthPostgresDescriptor;
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenvy::dotenv().ok();
@@ -15,7 +18,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     run_migrations(&pool).await?;
 
     let listener = TcpListener::bind(&address).await?;
-    let app = api::basic_actions::basic_actions_router(SqlxPostgresDescriptor::new(pool));
+    let todo_store = SqlxPostgresDescriptor::new(pool);
+
+    #[cfg(feature = "auth-http")]
+    let app = api::basic_actions::basic_actions_router(todo_store);
+
+    #[cfg(feature = "auth-core-postgres")]
+    let app = {
+        let auth_pool = pool_from_env("AUTH")?;
+        api::basic_actions::basic_actions_router(todo_store, AuthPostgresDescriptor::new(auth_pool))
+    };
 
     println!("Serving app on {address}");
     axum::serve(listener, app).await?;

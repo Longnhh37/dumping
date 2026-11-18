@@ -1,9 +1,4 @@
-use axum::{
-    Json,
-    extract::State,
-    http::StatusCode,
-    response::IntoResponse,
-};
+use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 
 use crate::{api::AppState, extract_auth::Credentials};
 use auth_core::api::auth::login::login as core_login;

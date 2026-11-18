@@ -11,6 +11,7 @@ to-do-core = { path = "../../core" }
 glue = { path = "../../../../glue", features = ["axum"] }
 to-do-dal = { path = "../../dal/", features = ["sqlx-postgres"] }
 auth-kernel = { path = "../../../auth/kernel/" }
+auth-dal = { path = "../../../auth/dal/", optional = true }
 
 [dev-dependencies]
 serde_json.workspace = true
@@ -18,5 +19,5 @@ tower.workspace = true
 
 [features]
 auth-http = ["auth-kernel/http"]
-auth-core-postgres = ["auth-kernel/core-postgres"]
+auth-core-postgres = ["auth-kernel/core-postgres", "auth-dal"]
 default = ["auth-core-postgres"]

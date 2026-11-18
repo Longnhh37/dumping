@@ -11,9 +11,14 @@ use axum::{
 use serde_json::{Value, json};
 use tower::ServiceExt;
 
+#[cfg(feature = "auth-core-postgres")]
+use auth_dal::users::{schema::User, transactions::get::GetByUniqueId};
 use glue::errors::{NanoServiceError, NanoServiceErrorStatus};
 use glue::token::HeaderToken;
-use to_do_axum_server::api::basic_actions::basic_actions_router;
+#[cfg(feature = "auth-core-postgres")]
+use to_do_axum_server::api::basic_actions::basic_actions_router_core_postgres;
+#[cfg(feature = "auth-http")]
+use to_do_axum_server::api::basic_actions::basic_actions_router_http;
 use to_do_dal::to_do_items::{
     schema::{NewToDoItem, ToDoItem},
     transactions::{
@@ -34,6 +39,22 @@ fn auth_token(unique_id: &str) -> String {
     }
     .encode()
     .unwrap()
+}
+
+#[cfg(feature = "auth-core-postgres")]
+#[derive(Clone)]
+struct MemoryAuthStore;
+
+#[cfg(feature = "auth-core-postgres")]
+impl GetByUniqueId for MemoryAuthStore {
+    async fn get_by_unique_id(&self, unique_id: &str) -> Result<User, NanoServiceError> {
+        Ok(User {
+            id: 1,
+            email: "test@example.test".into(),
+            password_hash: String::new(),
+            unique_id: unique_id.to_owned(),
+        })
+    }
 }
 
 #[derive(Clone, Default)]
@@ -114,6 +135,18 @@ impl UpdateOne for MemoryStore {
     }
 }
 
+fn test_router() -> Router {
+    #[cfg(feature = "auth-http")]
+    {
+        basic_actions_router_http(MemoryStore::default())
+    }
+
+    #[cfg(feature = "auth-core-postgres")]
+    {
+        basic_actions_router_core_postgres(MemoryStore::default(), MemoryAuthStore)
+    }
+}
+
 async fn send(
     app: &Router,
     method: Method,
@@ -142,7 +175,7 @@ async fn response_json(response: Response<Body>) -> Value {
 
 #[tokio::test]
 async fn api_routes_cover_item_lifecycle_auth_and_user_isolation() {
-    let app = basic_actions_router(MemoryStore::default());
+    let app = test_router();
     let token = auth_token("test-user");
     let other_token = auth_token("other-user");
 

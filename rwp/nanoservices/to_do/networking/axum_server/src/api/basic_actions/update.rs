@@ -6,14 +6,15 @@ use to_do_dal::to_do_items::{
     schema::ToDoItem, transactions::get::GetAll, transactions::update::UpdateOne,
 };
 
-use crate::api::AppState;
+use crate::{api::AppState, auth_user::ResolveAuthUser};
 
-pub async fn update<T: UpdateOne + GetAll>(
-    State(state): State<AppState<T>>,
+pub async fn update<T: UpdateOne + GetAll, R: ResolveAuthUser>(
+    State(state): State<AppState<T, R>>,
     token: HeaderToken,
     Json(body): Json<ToDoItem>,
 ) -> Result<impl IntoResponse, NanoServiceError> {
-    update_core(&state.store, body, &token.unique_id).await?;
-    let all_items = get_all_core(&state.store, &token.unique_id).await?;
+    let owner_key = state.auth_user.resolve_owner_key(&token.unique_id).await?;
+    update_core(&state.store, body, &owner_key).await?;
+    let all_items = get_all_core(&state.store, &owner_key).await?;
     Ok((StatusCode::OK, Json(all_items)))
 }

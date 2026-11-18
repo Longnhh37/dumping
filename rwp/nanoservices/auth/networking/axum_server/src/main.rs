@@ -1,8 +1,8 @@
 use tokio::net::TcpListener;
 
 use auth_axum_server::api;
-use glue::db::pool_from_env;
 use auth_dal::{migrations::run_migrations, users::descriptors::SqlxPostgresDescriptor};
+use glue::db::pool_from_env;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
