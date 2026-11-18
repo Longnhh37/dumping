@@ -1,5 +1,4 @@
 bun
-tasks.json
-postgres-language-server.jsonc
 basic_test_output.txt
+postgres-language-server.jsonc
 .env
