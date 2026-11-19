@@ -24,6 +24,9 @@ mod tests {
 
     #[test]
     fn reports_unknown_status() {
-        assert_eq!(rust_generate_button_text("blocked"), "an error has occurred");
+        assert_eq!(
+            rust_generate_button_text("blocked"),
+            "an error has occurred"
+        );
     }
 }
