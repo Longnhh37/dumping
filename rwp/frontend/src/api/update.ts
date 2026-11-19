@@ -1,6 +1,6 @@
-import { ToDoItem, ToDoItems, TaskStatus } from "../interfaces/toDoItems";
-import { patchCall } from "./utils";
+import type { TaskStatus, ToDoItem, ToDoItems } from "../interfaces/toDoItems";
 import { Url } from "./url";
+import { patchCall } from "./utils";
 
 export async function updateToDoItemCall(
 	id: number,

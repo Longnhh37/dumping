@@ -1,6 +1,10 @@
-import { NewToDoItem, ToDoItems, TaskStatus } from "../interfaces/toDoItems";
-import { postCall } from "./utils";
+import {
+	type NewToDoItem,
+	TaskStatus,
+	type ToDoItems,
+} from "../interfaces/toDoItems";
 import { Url } from "./url";
+import { postCall } from "./utils";
 
 export async function createToDoItemCall(title: string) {
 	const toDoItem: NewToDoItem = {

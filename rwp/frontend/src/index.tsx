@@ -1,17 +1,15 @@
-import ReactDOM from "react-dom/client";
 import { useEffect, useState } from "react";
+import ReactDOM from "react-dom/client";
 import "./App.css";
-
-import getAll from "./api/get";
-import type { ApiResult } from "./api/utils";
-
-import { CreateToDoItem } from "./components/CreateItemForm";
-import { ToDoItem } from "./components/ToDoItem";
-import { LoginForm } from "./components/LoginForm";
 
 import init, {
 	rust_generate_button_text,
 } from "../rust-interface/pkg/rust_interface.js";
+import getAll from "./api/get";
+import type { ApiResult } from "./api/utils";
+import { CreateToDoItem } from "./components/CreateItemForm";
+import { LoginForm } from "./components/LoginForm";
+import { ToDoItem } from "./components/ToDoItem";
 
 import type { ToDoItems } from "./interfaces/toDoItems";
 

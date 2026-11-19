@@ -1,6 +1,6 @@
 import type { ToDoItem, ToDoItems } from "../interfaces/toDoItems";
-import { getCall } from "./utils";
 import { Url } from "./url";
+import { getCall } from "./utils";
 
 export default async function getAll() {
 	return getCall<ToDoItems>(new Url().getAll, 200);
