@@ -18,5 +18,12 @@ services:
       timeout: 3s
       retries: 30
 
+  cache:
+    container_name: 'to-do-redis'
+    build: './nanoservices/user-session-cache/cache-module'
+    restart: always
+    ports:
+      - '6379:6379'
+
 volumes:
   postgres_data:
