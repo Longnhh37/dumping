@@ -5,67 +5,67 @@ type ApiFailure = { status: number; error: string; data?: unknown };
 export type ApiResult<X> = ApiSuccess<X> | ApiFailure;
 
 function getToken(): string {
-  return localStorage.getItem("token") ?? "";
+	return localStorage.getItem("token") ?? "";
 }
 
 async function handleRequest<X>(
-  config: AxiosRequestConfig,
-  expectedResponse: number,
+	config: AxiosRequestConfig,
+	expectedResponse: number,
 ): Promise<ApiResult<X>> {
-  let response: AxiosResponse<X | string>;
-  try {
-    response = await axios.request<X | string>({
-      ...config,
-      headers: {
-        "Content-Type": "application/json",
-        token: getToken(),
-        ...config.headers,
-      },
-      validateStatus: () => true,
-    });
-  } catch (error) {
-    return {
-      status: 500,
-      error: error instanceof Error ? error.message : "Network error",
-    };
-  }
+	let response: AxiosResponse<X | string>;
+	try {
+		response = await axios.request<X | string>({
+			...config,
+			headers: {
+				"Content-Type": "application/json",
+				token: getToken(),
+				...config.headers,
+			},
+			validateStatus: () => true,
+		});
+	} catch (error) {
+		return {
+			status: 500,
+			error: error instanceof Error ? error.message : "Network error",
+		};
+	}
 
-  if (response.status === expectedResponse) {
-    return { status: response.status, data: response.data as X };
-  }
-  return {
-    status: response.status,
-    error: `expected status ${expectedResponse} got ${response.status}`,
-    data: response.data,
-  };
+	if (response.status === expectedResponse) {
+		return { status: response.status, data: response.data as X };
+	}
+	return {
+		status: response.status,
+		error: `expected status ${expectedResponse} got ${response.status}`,
+		data: response.data,
+	};
 }
 
 export async function getCall<X>(url: string, expectedResponse: number) {
-  return handleRequest<X>({ method: "get", url }, expectedResponse);
+	return handleRequest<X>({ method: "get", url }, expectedResponse);
 }
 
 export async function postCall<X, T = unknown>(
-  url: string,
-  body: T,
-  expectedResponse: number,
+	url: string,
+	body: T,
+	expectedResponse: number,
 ) {
-  return handleRequest<X>(
-    { method: "post", url, data: body },
-    expectedResponse,
-  );
+	return handleRequest<X>(
+		{ method: "post", url, data: body },
+		expectedResponse,
+	);
 }
 
 export async function deleteCall<X>(url: string, expectedResponse: number) {
-  return handleRequest<X>({ method: "delete", url }, expectedResponse);
+	return handleRequest<X>({ method: "delete", url }, expectedResponse);
 }
 
 export async function patchCall<X, T = unknown>(
-  url: string,
-  body: T,
-  expectedResponse: number,
+	url: string,
+	body: T,
+	expectedResponse: number,
 ) {
-  return handleRequest<X>(
-    { method: "patch", url, data: body },
-    expectedResponse,
-  );
+	return handleRequest<X>(
+		{ method: "patch", url, data: body },
+		expectedResponse,
+	);
 }

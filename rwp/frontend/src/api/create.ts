@@ -3,9 +3,9 @@ import { postCall } from "./utils";
 import { Url } from "./url";
 
 export async function createToDoItemCall(title: string) {
-  const toDoItem: NewToDoItem = {
-    title,
-    status: TaskStatus.PENDING,
-  };
-  return postCall<ToDoItems, NewToDoItem>(new Url().create, toDoItem, 201);
+	const toDoItem: NewToDoItem = {
+		title,
+		status: TaskStatus.PENDING,
+	};
+	return postCall<ToDoItems, NewToDoItem>(new Url().create, toDoItem, 201);
 }

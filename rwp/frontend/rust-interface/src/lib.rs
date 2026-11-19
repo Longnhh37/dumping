@@ -7,7 +7,7 @@ pub fn rust_generate_button_text(status: &str) -> String {
     } else if status.eq_ignore_ascii_case("DONE") {
         "delete"
     } else {
-        "an error has occured"
+        "an error has occurred"
     }
     .to_string()
 }
@@ -24,6 +24,6 @@ mod tests {
 
     #[test]
     fn reports_unknown_status() {
-        assert_eq!(rust_generate_button_text("blocked"), "an error has occured");
+        assert_eq!(rust_generate_button_text("blocked"), "an error has occurred");
     }
 }

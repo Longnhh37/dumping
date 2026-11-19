@@ -3,5 +3,5 @@ import { deleteCall } from "./utils";
 import { Url } from "./url";
 
 export async function deleteToDoItemCall(id: number) {
-  return deleteCall<ToDoItems>(new Url().deleteUrl(id), 200);
+	return deleteCall<ToDoItems>(new Url().deleteUrl(id), 200);
 }
