@@ -13,7 +13,7 @@ members = [
   "nanoservices/auth/networking/axum_server",
   "nanoservices/to_do/core",
   "nanoservices/to_do/dal",
-  "nanoservices/to_do/networking/axum_server",
+  "nanoservices/to_do/networking/axum_server", "nanoservices/user-session-cache",
 ]
 
 [workspace.dependencies]
