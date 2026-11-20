@@ -3,7 +3,7 @@ use glue::errors::{NanoServiceError, NanoServiceErrorStatus, ResultExt};
 use sqlx::PgPool;
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), NanoServiceError> {
-    println!("migrating auth database...");
+    println!("Migrating auth database...");
 
     let mut migrations = sqlx::migrate!("./migrations");
     migrations.set_ignore_missing(true);

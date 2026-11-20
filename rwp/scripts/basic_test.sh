@@ -9,7 +9,7 @@ set -euo pipefail
 cd "${0:A:h}/.."
 
 OUTPUT="$(mktemp)"
-BIN="${CARGO_TARGET_DIR:-target}/debug/to-do-axum-server"
+BIN="${CARGO_TARGET_DIR:-target}/release/to-do-axum-server"
 BASE=":8080/api/v1"
 TOKEN="${TOKEN:?export TOKEN=<jwt> first, e.g. TOKEN=\$(xh --ignore-stdin -a EMAIL:PASS POST :8001/api/v1/auth/login | jq -r .)}"
 RUN_ID="${$}-$(date +%s)"
@@ -20,7 +20,7 @@ CODING_ID=""
 
 # Build synchronously first, so $! below is the PID of the server itself
 echo "Building axum server..."
-cargo build -p to-do-axum-server
+cargo build --release -p to-do-axum-server
 
 # Always stop the server, even when a step fails
 PID=""

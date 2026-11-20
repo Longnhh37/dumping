@@ -92,9 +92,10 @@ selected by the `auth-core-postgres` or `auth-http` feature.
 
    The script copies `.env.example` to `.env` if needed, starts PostgreSQL,
    Redis, and Elasticsearch through Docker Compose, builds the frontend, and
-   starts ingress on port `8001`. Ingress runs the auth and to-do database
-   migrations on startup. Set a private `JWT_SECRET` in `.env` before using the
-   app. The default local cache URL is `redis://127.0.0.1:6379`.
+   builds and starts ingress in release mode on port `8001`. Ingress runs the
+   auth and to-do database migrations on startup. Set a private `JWT_SECRET` in
+   `.env` before using the app. The default local cache URL is
+   `redis://127.0.0.1:6379`.
 
 2. In another terminal, register a user:
 

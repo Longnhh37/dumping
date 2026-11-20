@@ -6,7 +6,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
       - ./scripts/init-auth-db.sql:/docker-entrypoint-initdb.d/10-auth-db.sql:ro
     environment:
       - "POSTGRES_USER=username"
@@ -20,7 +20,9 @@ services:
 
   cache:
     container_name: "to-do-redis"
-    build: "./nanoservices/user-session-cache/cache-module"
+    build:
+      context: .
+      dockerfile: nanoservices/user-session-cache/cache-module/Dockerfile
     restart: always
     ports:
       - "6379:6379"

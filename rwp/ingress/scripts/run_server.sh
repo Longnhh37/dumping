@@ -8,4 +8,4 @@ bun install
 bun run build
 
 cd "$ROOT"
-cargo run -p ingress
+cargo run --release -p ingress

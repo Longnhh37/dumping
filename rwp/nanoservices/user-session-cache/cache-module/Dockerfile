@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install libclang-dev -y
 
 WORKDIR /app
 COPY . .
-RUN cargo build --release
+RUN cargo build --release --package cache-module
 
 FROM redis
 
