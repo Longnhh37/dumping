@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    future::Future,
     sync::{Arc, Mutex},
 };
 
@@ -11,14 +12,10 @@ use axum::{
 use serde_json::{Value, json};
 use tower::ServiceExt;
 
-#[cfg(feature = "auth-core-postgres")]
-use auth_dal::users::{schema::User, transactions::get::GetByUniqueId};
+use auth_kernel::user_session::{schema::UserSession, transactions::get::GetUserSession};
 use glue::errors::{NanoServiceError, NanoServiceErrorStatus};
 use glue::token::HeaderToken;
-#[cfg(feature = "auth-core-postgres")]
-use to_do_axum_server::api::basic_actions::basic_actions_router_core_postgres;
-#[cfg(all(feature = "auth-http", not(feature = "auth-core-postgres")))]
-use to_do_axum_server::api::basic_actions::basic_actions_router_http;
+use to_do_axum_server::api::basic_actions::basic_actions_router_with_session;
 use to_do_dal::to_do_items::{
     schema::{NewToDoItem, ToDoItem},
     transactions::{
@@ -41,19 +38,20 @@ fn auth_token(unique_id: &str) -> String {
     .unwrap()
 }
 
-#[cfg(feature = "auth-core-postgres")]
 #[derive(Clone)]
-struct MemoryAuthStore;
+struct MemoryUserSessions;
 
-#[cfg(feature = "auth-core-postgres")]
-impl GetByUniqueId for MemoryAuthStore {
-    async fn get_by_unique_id(&self, unique_id: &str) -> Result<User, NanoServiceError> {
-        Ok(User {
-            id: 1,
-            email: "test@example.test".into(),
-            password_hash: String::new(),
-            unique_id: unique_id.to_owned(),
-        })
+impl GetUserSession for MemoryUserSessions {
+    fn get_user_session(
+        &self,
+        unique_id: &str,
+    ) -> impl Future<Output = Result<UserSession, NanoServiceError>> + Send {
+        let user_id = match unique_id {
+            "test-user" => 1,
+            "other-user" => 2,
+            _ => 3,
+        };
+        async move { Ok(UserSession { user_id }) }
     }
 }
 
@@ -136,15 +134,7 @@ impl UpdateOne for MemoryStore {
 }
 
 fn test_router() -> Router {
-    #[cfg(all(feature = "auth-http", not(feature = "auth-core-postgres")))]
-    {
-        basic_actions_router_http(MemoryStore::default())
-    }
-
-    #[cfg(feature = "auth-core-postgres")]
-    {
-        basic_actions_router_core_postgres(MemoryStore::default(), MemoryAuthStore)
-    }
+    basic_actions_router_with_session(MemoryStore::default(), MemoryUserSessions)
 }
 
 async fn send(

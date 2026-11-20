@@ -125,6 +125,7 @@ version = "0.1.0"
 dependencies = [
  "auth-core",
  "auth-dal",
+ "cache-client",
  "glue",
  "reqwest",
 ]

@@ -3,6 +3,9 @@ pub mod delete;
 pub mod get;
 pub mod update;
 
+use auth_kernel::user_session::{
+    descriptors::RedisSessionDescriptor, transactions::get::GetUserSession,
+};
 use axum::{
     Router,
     routing::{delete, get, patch, post},
@@ -14,36 +17,39 @@ use to_do_dal::to_do_items::transactions::{
     update::UpdateOne,
 };
 
-use crate::{api::AppState, auth_user::ResolveAuthUser};
+use crate::api::AppState;
 
-#[cfg(feature = "auth-core-postgres")]
-use crate::auth_user::CorePostgresAuthUserResolver;
-#[cfg(feature = "auth-http")]
-use crate::auth_user::HttpAuthUserResolver;
-
-fn router<T, R>(store: T, auth_user: R) -> Router
+fn router<T, X>(store: T, user_session: X) -> Router
 where
     T: GetAll + GetById + DeleteOne + SaveOne + UpdateOne + Clone + Send + Sync + 'static,
-    R: ResolveAuthUser,
+    X: GetUserSession + Clone + Send + Sync + 'static,
 {
     let api_v1 = Router::new()
-        .route("/get", get(get::get_all::<T, R>))
-        .route("/get/{id}", get(get::get_by_id::<T, R>))
-        .route("/delete/{id}", delete(delete::delete_by_id::<T, R>))
-        .route("/create", post(create::create::<T, R>))
-        .route("/update", patch(update::update::<T, R>));
+        .route("/get", get(get::get_all::<T, X>))
+        .route("/get/{id}", get(get::get_by_id::<T, X>))
+        .route("/delete/{id}", delete(delete::delete_by_id::<T, X>))
+        .route("/create", post(create::create::<T, X>))
+        .route("/update", patch(update::update::<T, X>));
 
     Router::new()
         .nest("/api/v1", api_v1)
-        .with_state(AppState::new(store, auth_user))
+        .with_state(AppState::new(store, user_session))
 }
 
-#[cfg(feature = "auth-http")]
+pub fn basic_actions_router_with_session<T, X>(store: T, user_session: X) -> Router
+where
+    T: GetAll + GetById + DeleteOne + SaveOne + UpdateOne + Clone + Send + Sync + 'static,
+    X: GetUserSession + Clone + Send + Sync + 'static,
+{
+    router(store, user_session)
+}
+
+#[cfg(all(feature = "auth-http", not(feature = "auth-core-postgres")))]
 pub fn basic_actions_router_http<T>(store: T) -> Router
 where
     T: GetAll + GetById + DeleteOne + SaveOne + UpdateOne + Clone + Send + Sync + 'static,
 {
-    router(store, HttpAuthUserResolver)
+    router(store, RedisSessionDescriptor)
 }
 
 #[cfg(feature = "auth-core-postgres")]
@@ -52,5 +58,5 @@ where
     T: GetAll + GetById + DeleteOne + SaveOne + UpdateOne + Clone + Send + Sync + 'static,
     A: auth_dal::users::transactions::get::GetByUniqueId + Clone + Send + Sync + 'static,
 {
-    router(store, CorePostgresAuthUserResolver(auth_store))
+    router(store, RedisSessionDescriptor::new(auth_store))
 }
