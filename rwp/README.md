@@ -100,7 +100,7 @@ selected by the `auth-core-postgres` or `auth-http` feature.
 2. In another terminal, register a user:
 
    ```sh
-   ./scripts/create_user user@example.com 'a-strong-password'
+   ./scripts/create_user user@example.com 'astrongpassword'
    ```
 
    The helper posts to `http://127.0.0.1:8001/api/v1/users/create`. Override
@@ -142,7 +142,7 @@ To include the PostgreSQL-backed API smoke test, start the local stack and sign
 in to get a JWT. For example, with `xh` and `jq` installed:
 
 ```sh
-export TOKEN="$(xh --ignore-stdin -a user@example.com:a-strong-password POST :8001/api/v1/auth/login | jq -r .)"
+export TOKEN="$(xh --ignore-stdin -a user@example.com:astrongpassword POST :8001/api/v1/auth/login | jq -r .)"
 RUN_POSTGRES_INTEGRATION=1 ./scripts/test.sh
 ```
 
