@@ -94,14 +94,14 @@ if ! docker compose exec -T postgres psql -U username -d postgres -tAc \
 fi
 
 echo "Building Auth and ToDo Axum services..."
-cargo build --release -p to-do-axum-server --features auth-http --no-default-features
-cargo build --release -p auth-axum-server
+cargo build -p to-do-axum-server --features auth-http --no-default-features
+cargo build -p auth-axum-server
 
 mkdir -p "$TARGET_DIR"
-"$TARGET_DIR/release/auth-axum-server" >"$AUTH_LOG" 2>&1 &
+"$TARGET_DIR/debug/auth-axum-server" >"$AUTH_LOG" 2>&1 &
 AUTH_PID=$!
 # Both processes load settings from root .env.
-"$TARGET_DIR/release/to-do-axum-server" >"$TODO_LOG" 2>&1 &
+"$TARGET_DIR/debug/to-do-axum-server" >"$TODO_LOG" 2>&1 &
 TODO_PID=$!
 
 wait_for_http "$AUTH_URL/api/v1/auth/login"

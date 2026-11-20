@@ -5,6 +5,9 @@ edition.workspace = true
 
 [lib]
 crate-type = ["cdylib"]
+# The module initializer requires Redis to provide its allocator at runtime.
+test = false
+doctest = false
 
 [dependencies]
 redis-module = "2.0.8"

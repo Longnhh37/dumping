@@ -14,6 +14,7 @@ async fn get_connection(address: &str) -> Result<MultiplexedConnection, NanoServ
 
 fn unpack_result_string(result: Value) -> Result<String, NanoServiceError> {
     match result {
+        Value::Okay => Ok("OK".to_owned()),
         Value::SimpleString(s) => Ok(s),
         Value::BulkString(bytes) => String::from_utf8(bytes).map_err(|_| {
             NanoServiceError::new(

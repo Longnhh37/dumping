@@ -125,26 +125,32 @@ const App = () => {
 	}
 
 	if (error) {
-		return <div style={{ color: "red" }}>Error: {error}</div>;
+		return <div className="appError">Error: {error}</div>;
 	}
 
 	if (!wasmReady || !data) {
-		return <div>Loading...</div>;
+		return <div className="appError">Loading...</div>;
 	}
 
 	return (
 		<div className="App">
 			<div className="mainContainer">
 				<div className="header">
-					<p>Complete tasks: {data.done.length}</p>
-					<p>Pending tasks: {data.pending.length}</p>
-					<button onClick={() => void handleLogout()}>Log out</button>
+					<div className="taskCounts">
+						<p>Complete tasks: {data.done.length}</p>
+						<p>Pending tasks: {data.pending.length}</p>
+					</div>
+					<button className="logoutButton" onClick={() => void handleLogout()}>
+						Log out
+					</button>
 				</div>
 
 				<h1>Pending Items</h1>
 
 				<div>
-					{data.pending.map((item) => (
+					{data.pending.length === 0 ? (
+						<p className="emptyState">No pending tasks. You're all caught up.</p>
+					) : data.pending.map((item) => (
 						<ToDoItem
 							key={item.id}
 							id={item.id}
@@ -159,7 +165,9 @@ const App = () => {
 				<h1>Done Items</h1>
 
 				<div>
-					{data.done.map((item) => (
+					{data.done.length === 0 ? (
+						<p className="emptyState">Completed tasks will appear here.</p>
+					) : data.done.map((item) => (
 						<ToDoItem
 							key={item.id}
 							id={item.id}

@@ -1,118 +1,185 @@
-.App {
-	background-color: #92a8d1;
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	background: #2d343d;
 	font-family: Arial, Helvetica, sans-serif;
-	height: 100vh;
 }
 
-.itemContainer {
-	background: #034f84;
-	display: flex;
-	align-items: stretch;
-	justify-content: space-between;
-	margin: 0.3rem;
+.App {
+	min-height: 100vh;
+	padding: 20px 16px;
 }
 
-.itemContainer:hover {
-	background: #034f99;
-}
-
-.itemContainer p {
-	color: white;
-	display: inline-block;
-	margin: 0.5rem;
-	margin-right: 0.4rem;
-	margin-left: 0.4rem;
-}
-
-.actionButton {
-	display: inline-block;
-	float: right;
-	background: #f7786b;
-	border: none;
-	padding: 0.5rem;
-	padding-left: 2rem;
-	padding-right: 2rem;
-	color: white;
-	align-self: stretch;
-}
-
-.actionButton:hover {
-	background: #f7686b;
-	color: black;
-}
-
-.inputContainer {
-	background: #034f84;
-	display: flex;
-	align-items: stretch;
-	justify-content: space-between;
-	margin: 0.3rem;
-	margin-top: 2rem;
-}
-
-.inputContainer input {
-	display: inline-block;
-	margin: 0.4rem;
-	border: 2px solid transparent;
-	background: #ffffff;
-	color: #034f84;
-}
-
-.inputContainer input:focus {
-	outline: none;
-	border-color: #f7786b;
-	box-shadow: 0 0 5px #f7786b;
+.mainContainer {
+	width: min(100%, 720px);
+	margin: 0 auto;
+	padding: 30px 25px;
+	background: #fff;
+	border: 1px solid #c4c4c4;
+	border-radius: 25px;
 }
 
 .header {
-	background: #034f84;
-	margin-bottom: 0.3rem;
+	margin: -30px -25px 28px;
+	padding: 14px 20px;
+	background: #f7f7f7;
+	border-radius: 25px 25px 0 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
 }
+
+.taskCounts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 20px;
+}
+
 .header p {
-	color: white;
-	display: inline-block;
-	margin: 0.5rem;
-	margin-right: 0.4rem;
-	margin-left: 0.4rem;
+	margin: 0;
+	color: #666;
+	font-size: 14px;
 }
 
-@media (max-width: 500px) {
-	.App {
-		padding: 1px;
-		display: grid;
-		grid-template-columns: 1fr;
-	}
+.logoutButton,
+.actionButton {
+	border: 0;
+	border-radius: 5px;
+	background: #f0776c;
+	color: #fff;
+	cursor: pointer;
+	font-size: 15px;
 }
 
-@media (min-width: 501px) and (max-width: 550px) {
+.logoutButton {
+	padding: 10px 16px;
+}
+
+.mainContainer h1 {
+	margin: 24px 0 12px;
+	color: #666;
+	font-size: 21px;
+	font-weight: 400;
+}
+
+.itemContainer {
+	min-height: 50px;
+	margin: 9px 0;
+	padding: 8px 8px 8px 13px;
+	border: 1px solid #e1e1e1;
+	border-radius: 5px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.itemContainer p {
+	margin: 0;
+	color: #444;
+	font-size: 15px;
+	overflow-wrap: anywhere;
+}
+
+.actionButton {
+	flex: 0 0 auto;
+	min-height: 36px;
+	padding: 8px 14px;
+}
+
+.actionButton:hover,
+.logoutButton:hover {
+	background: #e9685d;
+}
+
+.actionButton:disabled {
+	cursor: wait;
+	opacity: 0.7;
+}
+
+.inputContainer {
+	display: flex;
+	gap: 10px;
+	margin-top: 18px;
+}
+
+.inputContainer input {
+	box-sizing: border-box;
+	min-width: 0;
+	flex: 1;
+	height: 46px;
+	padding: 0 12px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	font-size: 15px;
+}
+
+.inputContainer input:focus {
+	border-color: #6e8095;
+	outline: none;
+}
+
+.emptyState {
+	margin: 0;
+	padding: 14px;
+	border: 1px dashed #d5d5d5;
+	border-radius: 5px;
+	color: #888;
+	font-size: 14px;
+}
+
+.appError {
+	width: min(100% - 32px, 720px);
+	margin: 20px auto;
+	padding: 20px 24px;
+	border-radius: 12px;
+	background: #fff;
+	color: #b33;
+}
+
+@media (max-width: 520px) {
 	.App {
-		padding: 1px;
-		display: grid;
-		grid-template-columns: 1fr 5fr 1fr;
+		padding: 12px;
 	}
+
 	.mainContainer {
-		grid-column-start: 2;
+		padding: 24px 18px;
+		border-radius: 20px;
 	}
-}
 
-@media (min-width: 551px) and (max-width: 1000px) {
-	.App {
-		padding: 1px;
-		display: grid;
-		grid-template-columns: 1fr 3fr 1fr;
+	.header {
+		margin: -24px -18px 24px;
+		padding: 13px 16px;
+		border-radius: 20px 20px 0 0;
 	}
-	.mainContainer {
-		grid-column-start: 2;
-	}
-}
 
-@media (min-width: 1001px) {
-	.App {
-		padding: 1px;
-		display: grid;
-		grid-template-columns: 1fr 1fr 1fr;
+	.taskCounts {
+		gap: 5px 12px;
 	}
-	.mainContainer {
-		grid-column-start: 2;
+
+	.header p {
+		font-size: 12px;
+	}
+
+	.logoutButton {
+		padding: 9px 12px;
+		font-size: 14px;
+	}
+
+	.itemContainer {
+		align-items: flex-start;
+	}
+
+	.itemContainer p {
+		padding-top: 8px;
+	}
+
+	.actionButton {
+		padding: 8px 10px;
+		font-size: 13px;
 	}
 }
