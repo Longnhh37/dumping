@@ -6,6 +6,7 @@ import init, {
 	rust_generate_button_text,
 } from "../rust-interface/pkg/rust_interface.js";
 import getAll from "./api/get";
+import logoutSession from "./api/logout";
 import type { ApiResult } from "./api/utils";
 import { CreateToDoItem } from "./components/CreateItemForm";
 import { LoginForm } from "./components/LoginForm";
@@ -27,6 +28,19 @@ const App = () => {
 	}
 
 	function handleUnauthorized() {
+		localStorage.removeItem("token");
+		setData(null);
+		setError(null);
+		setLoggedin(false);
+	}
+
+	async function handleLogout() {
+		const response = await logoutSession();
+		if ("error" in response) {
+			alert(`Logout failed: ${response.error}`);
+			return;
+		}
+
 		localStorage.removeItem("token");
 		setData(null);
 		setError(null);
@@ -124,6 +138,7 @@ const App = () => {
 				<div className="header">
 					<p>Complete tasks: {data.done.length}</p>
 					<p>Pending tasks: {data.pending.length}</p>
+					<button onClick={() => void handleLogout()}>Log out</button>
 				</div>
 
 				<h1>Pending Items</h1>

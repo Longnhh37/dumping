@@ -4,6 +4,7 @@ export class Url {
 	getAll: string;
 	update: string;
 	login: string;
+	logout: string;
 
 	constructor() {
 		this.baseUrl = Url.getBaseUrl();
@@ -11,6 +12,7 @@ export class Url {
 		this.getAll = `${this.baseUrl}api/v1/get`;
 		this.update = `${this.baseUrl}api/v1/update`;
 		this.login = `${this.baseUrl}api/v1/auth/login`;
+		this.logout = `${this.baseUrl}api/v1/auth/logout`;
 	}
 
 	static getBaseUrl(): string {
