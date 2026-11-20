@@ -14,8 +14,8 @@ redis_module! {
     ),
     data_types: [],
     commands: [
-        ["sessions.login", login, "write fast deny-oom", 1, 1, 1, ""],
-        ["sessions.logout", logout, "write fast deny-oom", 1, 1, 1, ""],
-        ["sessions.update", update, "write fast deny-oom", 1, 1, 1, ""],
+        ["session.login", login, "write fast deny-oom", 1, 1, 1, ""],
+        ["session.logout", logout, "write fast deny-oom", 1, 1, 1, ""],
+        ["session.update", update, "write fast deny-oom", 1, 1, 1, ""],
     ]
 }
