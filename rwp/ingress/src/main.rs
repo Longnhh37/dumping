@@ -13,6 +13,7 @@ use auth_dal::{
     migrations::run_migrations as run_auth_migrations,
     users::descriptors::SqlxPostgresDescriptor as AuthPostgresDescriptor,
 };
+use auth_server::api::RedisSessionDescriptor;
 use auth_server::api::router as auth_router;
 use glue::db::pool_from_env;
 use to_do_axum_server::api as todo_api;
@@ -85,7 +86,10 @@ fn app(todo_store: SqlxPostgresDescriptor, auth_store: AuthPostgresDescriptor) -
             todo_store,
             auth_store.clone(),
         ))
-        .merge(auth_router(auth_server::api::AppState::new(auth_store)))
+        .merge(auth_router(auth_server::api::AppState::new(
+            auth_store.clone(),
+            RedisSessionDescriptor::new(auth_store),
+        )))
         .fallback(catch_all)
         .layer(cors)
 }

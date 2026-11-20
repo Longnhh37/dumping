@@ -6,8 +6,8 @@ use glue::{errors::NanoServiceError, token::HeaderToken};
 
 use crate::api::AppState;
 
-pub async fn get_me<T: GetByUniqueId>(
-    State(state): State<AppState<T>>,
+pub async fn get_me<T: GetByUniqueId + Send + Sync + 'static, X: Send + Sync + 'static>(
+    State(state): State<AppState<T, X>>,
     token: HeaderToken,
 ) -> Result<impl IntoResponse, NanoServiceError> {
     let user = get_by_unique_id_core::<T>(&state.store, &token.unique_id).await?;

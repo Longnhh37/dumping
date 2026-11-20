@@ -2,6 +2,7 @@ use tokio::net::TcpListener;
 
 use auth_axum_server::api;
 use auth_dal::{migrations::run_migrations, users::descriptors::SqlxPostgresDescriptor};
+use auth_kernel::user_session::descriptors::RedisSessionDescriptor;
 use glue::db::pool_from_env;
 
 #[tokio::main]
@@ -15,7 +16,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     run_migrations(&pool).await?;
 
     let listener = TcpListener::bind(&address).await?;
-    let app = api::router(api::AppState::new(SqlxPostgresDescriptor::new(pool)));
+    let store = SqlxPostgresDescriptor::new(pool);
+    let app = api::router(api::AppState::new(
+        store.clone(),
+        RedisSessionDescriptor::new(store),
+    ));
 
     println!("Serving app on {address}");
     axum::serve(listener, app).await?;
