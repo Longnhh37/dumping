@@ -80,7 +80,7 @@ selected by the `auth-core-postgres` or `auth-http` feature.
 - Docker with the Docker Compose plugin
 - Rust toolchain and Cargo
 - [Bun](https://bun.sh/) for building and serving the frontend
-- `curl` and `jq` to use the user creation helper
+- `xh` to use the user creation helper
 
 ### Start the app
 

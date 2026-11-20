@@ -15,26 +15,26 @@ if [[ -f "$ROOT/.env" ]]; then
   set +a
 fi
 
-if ! command -v jq >/dev/null 2>&1; then
-  echo "create_user requires jq to encode the JSON request safely" >&2
+if ! command -v xh >/dev/null 2>&1; then
+  echo "create_user requires xh to send the JSON request" >&2
   exit 1
 fi
 
 BASE_URL="${INGRESS_URL:-http://127.0.0.1:${INGRESS_WEB_PORT:-8001}}"
 BASE_URL="${BASE_URL%/}"
-PAYLOAD="$(jq -n --arg email "$1" --arg password "$2" '{email: $email, password: $password}')"
-RESPONSE="$(mktemp)"
-trap 'rm -f "$RESPONSE"' EXIT
-
-STATUS="$(curl --silent --show-error --output "$RESPONSE" --write-out '%{http_code}' \
-  --header 'Content-Type: application/json' \
-  --data "$PAYLOAD" \
-  "$BASE_URL/api/v1/users/create")"
+if RESPONSE="$(xh --ignore-stdin --pretty=none --print=hb \
+  POST "$BASE_URL/api/v1/users/create" email="$1" password="$2")"; then
+  STATUS="$(awk 'NR == 1 { print $2 }' <<<"$RESPONSE")"
+else
+  STATUS="$(awk 'NR == 1 { print $2 }' <<<"$RESPONSE")"
+  echo "User creation request failed${STATUS:+ (HTTP $STATUS)}:" >&2
+  printf '%s\n' "$RESPONSE" >&2
+  exit 1
+fi
 
 if [[ "$STATUS" != "201" ]]; then
-  echo "User creation failed (HTTP $STATUS):" >&2
-  cat "$RESPONSE" >&2
-  echo >&2
+  echo "User creation expected HTTP 201, got ${STATUS:-no status}:" >&2
+  printf '%s\n' "$RESPONSE" >&2
   exit 1
 fi
 
