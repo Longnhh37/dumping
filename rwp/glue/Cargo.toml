@@ -7,9 +7,11 @@ edition.workspace = true
 serde.workspace = true
 axum = { workspace = true, optional = true }
 sqlx = { workspace = true, optional = true }
-tracing.workspace = true
 thiserror.workspace = true
 jsonwebtoken.workspace = true
+tracing.workspace = true
+tracing-subscriber = "0.3.23"
+tower-http = { version = "0.7.1", features = ["trace"] }
 
 [features]
 axum = ["dep:axum"]

@@ -14,3 +14,4 @@ auth-kernel = { path = "../../kernel/", features = [
   "core-postgres",
 ], default-features = false }
 glue = { path = "../../../../glue/", features = ["axum"] }
+tracing.workspace = true

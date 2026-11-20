@@ -8,6 +8,7 @@ use axum::{
 };
 use rust_embed::RustEmbed;
 use tower_http::cors::{Any, CorsLayer};
+use tracing::Level;
 
 use auth_dal::{
     migrations::run_migrations as run_auth_migrations,
@@ -15,7 +16,10 @@ use auth_dal::{
 };
 use auth_server::api::RedisSessionDescriptor;
 use auth_server::api::router as auth_router;
-use glue::db::pool_from_env;
+use glue::{
+    db::pool_from_env,
+    log::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer, logger::init_logger},
+};
 use to_do_axum_server::api as todo_api;
 use to_do_dal::migrations::run_migrations as run_todo_migrations;
 use to_do_dal::to_do_items::descriptors::SqlxPostgresDescriptor;
@@ -92,11 +96,18 @@ fn app(todo_store: SqlxPostgresDescriptor, auth_store: AuthPostgresDescriptor) -
         )))
         .fallback(catch_all)
         .layer(cors)
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+                .on_request(DefaultOnRequest::new().level(Level::INFO))
+                .on_response(DefaultOnResponse::new().level(Level::INFO)),
+        )
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenvy::dotenv().ok();
+    init_logger();
     let pool = pool_from_env("TO_DO")?;
     run_todo_migrations(&pool).await?;
     let auth_pool = pool_from_env("AUTH")?;
@@ -105,6 +116,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let host = std::env::var("INGRESS_WEB_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
     let port = std::env::var("INGRESS_WEB_PORT").unwrap_or_else(|_| "8001".to_string());
     let listener = tokio::net::TcpListener::bind(format!("{host}:{port}")).await?;
+    tracing::info!(address = %listener.local_addr()?, "ingress server listening");
 
     let todo_store = SqlxPostgresDescriptor::new(pool);
     let auth_store = AuthPostgresDescriptor::new(auth_pool);

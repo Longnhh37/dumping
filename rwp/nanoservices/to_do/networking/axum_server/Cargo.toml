@@ -9,6 +9,7 @@ axum.workspace = true
 dotenvy.workspace = true
 to-do-core = { path = "../../core" }
 glue = { path = "../../../../glue", features = ["axum"] }
+tracing.workspace = true
 to-do-dal = { path = "../../dal/", features = ["sqlx-postgres"] }
 auth-kernel = { path = "../../../auth/kernel/" }
 auth-dal = { path = "../../../auth/dal/", optional = true }

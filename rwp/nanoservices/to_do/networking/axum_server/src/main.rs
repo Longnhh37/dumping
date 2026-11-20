@@ -1,6 +1,10 @@
 use tokio::net::TcpListener;
+use tracing::Level;
 
-use glue::db::pool_from_env;
+use glue::{
+    db::pool_from_env,
+    log::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer, logger::init_logger},
+};
 use to_do_axum_server::api;
 use to_do_dal::{migrations::run_migrations, to_do_items::descriptors::SqlxPostgresDescriptor};
 
@@ -10,6 +14,7 @@ use auth_dal::users::descriptors::SqlxPostgresDescriptor as AuthPostgresDescript
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenvy::dotenv().ok();
+    init_logger();
     let host = std::env::var("TO_DO_WEB_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
     let port = std::env::var("TO_DO_WEB_PORT").unwrap_or_else(|_| "8080".to_string());
     let address = format!("{host}:{port}");
@@ -32,7 +37,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
     };
 
-    println!("Serving app on {address}");
-    axum::serve(listener, app).await?;
+    tracing::info!(%address, "to-do server listening");
+    let trace_layer = TraceLayer::new_for_http()
+        .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+        .on_request(DefaultOnRequest::new().level(Level::INFO))
+        .on_response(DefaultOnResponse::new().level(Level::INFO));
+    axum::serve(listener, app.layer(trace_layer)).await?;
     Ok(())
 }
