@@ -120,6 +120,18 @@ selected by the `auth-core-postgres` or `auth-http` feature.
 
    This stops the containers and preserves their database data.
 
+To delete application rows from both PostgreSQL databases while retaining the
+table schemas and SQLx migration history, run:
+
+```sh
+./scripts/clean_db.sh
+```
+
+The script displays the database targets and asks you to type `CLEAN to_do
+auth` before changing data. Use `./scripts/clean_db.sh --yes` only for
+non-interactive use after verifying the targets. Sequences are restarted. The
+script does not delete Redis or Elasticsearch data.
+
 ## Test
 
 Run `./scripts/test.sh` for Rust unit tests (including Basic-auth parsing), the
