@@ -10,4 +10,7 @@ dotenvy.workspace = true
 base64.workspace = true
 auth-core = { path = "../../core/" }
 auth-dal = { path = "../../dal/" }
+auth-kernel = { path = "../../kernel/", features = [
+  "auth-core",
+], default-features = false }
 glue = { path = "../../../../glue/", features = ["axum"] }
