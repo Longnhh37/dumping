@@ -20,13 +20,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let listener = TcpListener::bind(&address).await?;
     let todo_store = SqlxPostgresDescriptor::new(pool);
 
-    #[cfg(feature = "auth-http")]
-    let app = api::basic_actions::basic_actions_router(todo_store);
+    #[cfg(all(feature = "auth-http", not(feature = "auth-core-postgres")))]
+    let app = api::basic_actions::basic_actions_router_http(todo_store);
 
     #[cfg(feature = "auth-core-postgres")]
     let app = {
         let auth_pool = pool_from_env("AUTH")?;
-        api::basic_actions::basic_actions_router(todo_store, AuthPostgresDescriptor::new(auth_pool))
+        api::basic_actions::basic_actions_router_core_postgres(
+            todo_store,
+            AuthPostgresDescriptor::new(auth_pool),
+        )
     };
 
     println!("Serving app on {address}");

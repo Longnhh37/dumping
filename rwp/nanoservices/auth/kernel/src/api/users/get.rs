@@ -10,7 +10,7 @@ mod core_imports {
     pub use auth_dal::users::transactions::get::GetByUniqueId;
 }
 
-#[cfg(all(feature = "http", not(feature = "core-postgres")))]
+#[cfg(feature = "http")]
 mod reqwest_imports {
     pub use glue::errors::{NanoServiceErrorStatus, ResultExt};
     pub use glue::token::HeaderToken;
@@ -23,23 +23,23 @@ use common_imports::*;
 #[cfg(feature = "core-postgres")]
 use core_imports::*;
 
-#[cfg(all(feature = "http", not(feature = "core-postgres")))]
+#[cfg(feature = "http")]
 use reqwest_imports::*;
 
 #[cfg(feature = "core-postgres")]
-pub async fn get_user_by_unique_id<T: GetByUniqueId>(
+pub async fn get_user_by_unique_id_core<T: GetByUniqueId>(
     store: &T,
     id: &str,
 ) -> Result<TrimmedUser, NanoServiceError> {
     get_by_unique_id_core(store, id).await
 }
 
-#[cfg(all(feature = "http", not(feature = "core-postgres")))]
-pub async fn get_user_by_unique_id(id: &str) -> Result<TrimmedUser, NanoServiceError> {
+#[cfg(feature = "http")]
+pub async fn get_user_by_unique_id_http(id: &str) -> Result<TrimmedUser, NanoServiceError> {
     get_user_by_unique_id_api_call(id).await
 }
 
-#[cfg(all(feature = "http", not(feature = "core-postgres")))]
+#[cfg(feature = "http")]
 async fn get_user_by_unique_id_api_call(id: &str) -> Result<TrimmedUser, NanoServiceError> {
     let url = std::env::var("AUTH_API_URL").eject(NanoServiceErrorStatus::BadRequest)?;
     let full_url = format!("{}/api/v1/users/me", url);

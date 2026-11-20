@@ -17,7 +17,7 @@ use glue::errors::{NanoServiceError, NanoServiceErrorStatus};
 use glue::token::HeaderToken;
 #[cfg(feature = "auth-core-postgres")]
 use to_do_axum_server::api::basic_actions::basic_actions_router_core_postgres;
-#[cfg(feature = "auth-http")]
+#[cfg(all(feature = "auth-http", not(feature = "auth-core-postgres")))]
 use to_do_axum_server::api::basic_actions::basic_actions_router_http;
 use to_do_dal::to_do_items::{
     schema::{NewToDoItem, ToDoItem},
@@ -136,7 +136,7 @@ impl UpdateOne for MemoryStore {
 }
 
 fn test_router() -> Router {
-    #[cfg(feature = "auth-http")]
+    #[cfg(all(feature = "auth-http", not(feature = "auth-core-postgres")))]
     {
         basic_actions_router_http(MemoryStore::default())
     }

@@ -15,7 +15,7 @@ pub struct HttpAuthUserResolver;
 
 #[cfg(feature = "auth-http")]
 pub async fn resolve_user_http(unique_id: &str) -> Result<String, NanoServiceError> {
-    let user = auth_kernel::api::users::get::get_user_by_unique_id(unique_id).await?;
+    let user = auth_kernel::api::users::get::get_user_by_unique_id_http(unique_id).await?;
     Ok(user.unique_id)
 }
 
@@ -38,7 +38,8 @@ pub async fn resolve_user_core_postgres<T>(
 where
     T: auth_dal::users::transactions::get::GetByUniqueId,
 {
-    let user = auth_kernel::api::users::get::get_user_by_unique_id(auth_store, unique_id).await?;
+    let user =
+        auth_kernel::api::users::get::get_user_by_unique_id_core(auth_store, unique_id).await?;
     Ok(user.unique_id)
 }
 

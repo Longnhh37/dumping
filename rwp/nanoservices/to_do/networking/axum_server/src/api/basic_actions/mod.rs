@@ -54,20 +54,3 @@ where
 {
     router(store, CorePostgresAuthUserResolver(auth_store))
 }
-
-#[cfg(feature = "auth-http")]
-pub fn basic_actions_router<T>(store: T) -> Router
-where
-    T: GetAll + GetById + DeleteOne + SaveOne + UpdateOne + Clone + Send + Sync + 'static,
-{
-    basic_actions_router_http(store)
-}
-
-#[cfg(feature = "auth-core-postgres")]
-pub fn basic_actions_router<T, A>(store: T, auth_store: A) -> Router
-where
-    T: GetAll + GetById + DeleteOne + SaveOne + UpdateOne + Clone + Send + Sync + 'static,
-    A: auth_dal::users::transactions::get::GetByUniqueId + Clone + Send + Sync + 'static,
-{
-    basic_actions_router_core_postgres(store, auth_store)
-}
