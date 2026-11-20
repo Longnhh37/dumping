@@ -43,3 +43,34 @@ impl<S: Send + Sync> FromRequestParts<S> for Credentials {
         parse_basic(&parts.headers)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use axum::http::{HeaderMap, HeaderValue, header};
+
+    use super::parse_basic;
+
+    #[test]
+    fn parses_basic_credentials() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            header::AUTHORIZATION,
+            HeaderValue::from_static("Basic dXNlckBleGFtcGxlLmNvbTpwYXNzd29yZA=="),
+        );
+
+        let credentials = parse_basic(&headers).unwrap();
+        assert_eq!(credentials.email, "user@example.com");
+        assert_eq!(credentials.password, "password");
+    }
+
+    #[test]
+    fn rejects_missing_or_malformed_basic_credentials() {
+        assert!(parse_basic(&HeaderMap::new()).is_err());
+
+        for value in ["Bearer token", "Basic !!!", "Basic bm9fY29sb24="] {
+            let mut headers = HeaderMap::new();
+            headers.insert(header::AUTHORIZATION, HeaderValue::from_str(value).unwrap());
+            assert!(parse_basic(&headers).is_err(), "accepted {value}");
+        }
+    }
+}

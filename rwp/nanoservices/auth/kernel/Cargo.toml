@@ -8,7 +8,7 @@ auth-core = { path = "../core/", optional = true }
 auth-dal = { path = "../dal/", optional = true }
 cache-client = { path = "../../user-session-cache/cache-client/" }
 glue = { path = "../../../glue/" }
-reqwest = { version = "0.13.5", optional = true, features = ["json"] }
+reqwest = { workspace = true, optional = true }
 
 [features]
 http = ["reqwest", "auth-dal"]

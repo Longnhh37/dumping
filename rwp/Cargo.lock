@@ -854,10 +854,14 @@ name = "glue"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "chrono",
  "jsonwebtoken",
+ "reqwest",
  "serde",
+ "serde_json",
  "sqlx",
  "thiserror",
+ "tokio",
  "tower-http 0.7.1",
  "tracing",
  "tracing-subscriber",

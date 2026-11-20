@@ -75,22 +75,72 @@ selected by the `auth-core-postgres` or `auth-http` feature.
 
 ## Run locally
 
-Run `./scripts/init.sh` from the repository root. It creates `.env` from
-`.env.example` when needed, starts PostgreSQL with Docker Compose, builds the
-frontend, and starts ingress on port 8001. The container initializes separate
-`to_do` and `auth` databases; ingress runs each service's migrations at startup.
-Configure their URLs and pool sizes with `TO_DO_DB_URL`,
-`TO_DO_MAX_CONNECTIONS`, `AUTH_DB_URL`, and `AUTH_MAX_CONNECTIONS` in `.env`.
-If `.env` was created before these settings were added, set both max-connection
-values to `5`.
-Run `./scripts/cleanup.sh` to stop the local PostgreSQL container while
-preserving its database data.
+### Prerequisites
+
+- Docker with the Docker Compose plugin
+- Rust toolchain and Cargo
+- [Bun](https://bun.sh/) for building and serving the frontend
+- `curl` and `jq` to use the user creation helper
+
+### Start the app
+
+1. From the repository root, initialize configuration and start the services:
+
+   ```sh
+   ./scripts/init.sh
+   ```
+
+   The script copies `.env.example` to `.env` if needed, starts PostgreSQL,
+   Redis, and Elasticsearch through Docker Compose, builds the frontend, and
+   starts ingress on port `8001`. Ingress runs the auth and to-do database
+   migrations on startup. Set a private `JWT_SECRET` in `.env` before using the
+   app. The default local cache URL is `redis://127.0.0.1:6379`.
+
+2. In another terminal, register a user:
+
+   ```sh
+   ./scripts/create_user user@example.com 'a-strong-password'
+   ```
+
+   The helper posts to `http://127.0.0.1:8001/api/v1/users/create`. Override
+   the base URL with `INGRESS_URL` if ingress is listening elsewhere. The
+   account is stored in the auth PostgreSQL database.
+
+3. Open <http://127.0.0.1:8001> and sign in with that email and password. The
+   app stores the returned JWT in browser storage, uses it for to-do requests,
+   and clears the session when you log out. To-do items are scoped to the
+   signed-in user.
+
+4. Stop the local stack when finished:
+
+   ```sh
+   ./scripts/cleanup.sh
+   ```
+
+   This stops the containers and preserves their database data.
 
 ## Test
 
-Run `./scripts/test.sh` for Rust unit and in-memory API/ingress integration
-tests, frontend URL tests, TypeScript checking, and frontend build.
+Run `./scripts/test.sh` for Rust unit tests (including Basic-auth parsing), the
+in-memory to-do API lifecycle integration test, ingress routing tests, frontend
+URL tests, TypeScript checking, and frontend build.
 
-To include the PostgreSQL-backed API smoke test, make sure PostgreSQL is running
-and run `RUN_POSTGRES_INTEGRATION=1 ./scripts/test.sh`. This starts the backend
-server on the configured `TO_DO_WEB_PORT` (8080 by default).
+To include the PostgreSQL-backed API smoke test, start the local stack and sign
+in to get a JWT. For example, with `xh` and `jq` installed:
+
+```sh
+export TOKEN="$(xh --ignore-stdin -a user@example.com:a-strong-password POST :8001/api/v1/auth/login | jq -r .)"
+RUN_POSTGRES_INTEGRATION=1 ./scripts/test.sh
+```
+
+The smoke test starts the standalone to-do server on `TO_DO_WEB_PORT` (8080 by
+default). Its current API uses `title`, numeric item IDs, and `/get/{id}` and
+`/delete/{id}` routes.
+
+### API flow
+
+The browser calls `POST /api/v1/auth/login` with Basic auth. Ingress validates
+the credentials, returns a JWT, and writes the session to Redis. To-do requests
+send that JWT in the `token` header; the API resolves its unique ID through the
+session cache and scopes CRUD operations by the resulting user ID. Logout calls
+`POST /api/v1/auth/logout`, which removes the cached session.

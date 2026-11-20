@@ -204,4 +204,32 @@ mod tests {
             .unwrap();
         assert_eq!(missing_route.status(), StatusCode::NOT_FOUND);
     }
+
+    #[tokio::test]
+    async fn logout_requires_a_valid_token_header() {
+        let missing_token = test_app()
+            .oneshot(
+                Request::builder()
+                    .method(Method::POST)
+                    .uri("/api/v1/auth/logout")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(missing_token.status(), StatusCode::UNAUTHORIZED);
+
+        let invalid_token = test_app()
+            .oneshot(
+                Request::builder()
+                    .method(Method::POST)
+                    .uri("/api/v1/auth/logout")
+                    .header("token", "not-a-jwt")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(invalid_token.status(), StatusCode::UNAUTHORIZED);
+    }
 }

@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -ne 2 ]]; then
+  echo "Usage: $0 <email> <password>" >&2
+  exit 2
+fi
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+if [[ -f "$ROOT/.env" ]]; then
+  set -a
+  # .env is maintained as shell-compatible KEY=value configuration.
+  # shellcheck disable=SC1091
+  source "$ROOT/.env"
+  set +a
+fi
+
+if ! command -v jq >/dev/null 2>&1; then
+  echo "create_user requires jq to encode the JSON request safely" >&2
+  exit 1
+fi
+
+BASE_URL="${INGRESS_URL:-http://127.0.0.1:${INGRESS_WEB_PORT:-8001}}"
+BASE_URL="${BASE_URL%/}"
+PAYLOAD="$(jq -n --arg email "$1" --arg password "$2" '{email: $email, password: $password}')"
+RESPONSE="$(mktemp)"
+trap 'rm -f "$RESPONSE"' EXIT
+
+STATUS="$(curl --silent --show-error --output "$RESPONSE" --write-out '%{http_code}' \
+  --header 'Content-Type: application/json' \
+  --data "$PAYLOAD" \
+  "$BASE_URL/api/v1/users/create")"
+
+if [[ "$STATUS" != "201" ]]; then
+  echo "User creation failed (HTTP $STATUS):" >&2
+  cat "$RESPONSE" >&2
+  echo >&2
+  exit 1
+fi
+
+echo "Created user $1"
