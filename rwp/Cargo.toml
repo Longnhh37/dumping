@@ -35,3 +35,8 @@ tracing = "0.1"
 chrono = "0.4.45"
 reqwest = { version = "0.13.5", features = ["json"] }
 tower-http = { version = "0.7.1", features = ["trace"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
