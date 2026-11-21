@@ -82,3 +82,39 @@ mod axum_impl {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::HeaderToken;
+    use crate::errors::NanoServiceErrorStatus;
+
+    fn configure_secret() {
+        static INIT: std::sync::Once = std::sync::Once::new();
+        INIT.call_once(|| unsafe { std::env::set_var("JWT_SECRET", "glue-token-tests") });
+    }
+
+    #[test]
+    fn token_round_trip_preserves_unique_id() {
+        configure_secret();
+        let encoded = HeaderToken {
+            unique_id: "user-42".into(),
+        }
+        .encode()
+        .unwrap();
+        let decoded = HeaderToken::decode(&encoded).unwrap();
+        assert_eq!(decoded.unique_id, "user-42");
+    }
+
+    #[test]
+    fn rejects_tampered_tokens_as_unauthorized() {
+        configure_secret();
+        let encoded = HeaderToken {
+            unique_id: "user-42".into(),
+        }
+        .encode()
+        .unwrap();
+        let tampered = format!("{encoded}x");
+        let error = HeaderToken::decode(&tampered).unwrap_err();
+        assert_eq!(error.status, NanoServiceErrorStatus::Unauthorized);
+    }
+}

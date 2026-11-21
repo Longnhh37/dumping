@@ -159,12 +159,33 @@ mod tests {
 
     #[tokio::test]
     async fn serves_the_frontend_shell_and_assets() {
-        let response = test_app()
+        let app = test_app();
+        let response = app
+            .clone()
             .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
             .await
             .unwrap();
         assert_eq!(response.status(), StatusCode::OK);
-        let response = test_app()
+        assert!(
+            response.headers()["content-type"]
+                .to_str()
+                .unwrap()
+                .starts_with("text/html")
+        );
+        let spa_route = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri("/tasks/42")
+                    .header("accept", "text/html")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(spa_route.status(), StatusCode::OK);
+        let response = app
+            .clone()
             .oneshot(
                 Request::builder()
                     .uri("/bundle.css")
@@ -174,6 +195,22 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(response.status(), StatusCode::OK);
+        assert!(
+            response.headers()["content-type"]
+                .to_str()
+                .unwrap()
+                .starts_with("text/css")
+        );
+        let missing_asset = app
+            .oneshot(
+                Request::builder()
+                    .uri("/missing.js")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(missing_asset.status(), StatusCode::NOT_FOUND);
     }
 
     #[tokio::test]
@@ -203,6 +240,21 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(missing_route.status(), StatusCode::NOT_FOUND);
+
+        let cors = test_app()
+            .oneshot(
+                Request::builder()
+                    .method(Method::OPTIONS)
+                    .uri("/api/v1/create")
+                    .header("origin", "https://example.test")
+                    .header("access-control-request-method", "POST")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(cors.status(), StatusCode::OK);
+        assert_eq!(cors.headers()["access-control-allow-origin"], "*");
     }
 
     #[tokio::test]
